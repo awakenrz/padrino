@@ -4,13 +4,11 @@ def make_simple(b):
         'Kills a player.',
         type=b.tycon('Kill'))
 
-
     class Factions:
         TOWN = b.declare_faction('Town')
 
         MAFIA = b.declare_faction(
             'Mafia', membersKnown=True, actionSets=[{KILL}])
-
 
     class Actions:
         STRONGMAN_KILL= b.declare_action(
@@ -65,10 +63,10 @@ def make_simple(b):
             'See all actions a player performed at night.',
             type=b.tycon('Follow'))
 
-        PEEP = b.declare_action(
-            'peep {targets[0]}',
+        VOYEUR = b.declare_action(
+            'voyeur {targets[0]}',
             'See all actions performed on a player at night.',
-            type=b.tycon('Peep'))
+            type=b.tycon('Voyeur'))
 
     Actions.KILL = KILL
 
@@ -114,7 +112,7 @@ def make_simple(b):
             type=b.tycon('Granted', grantedActionSet={Actions.FOLLOW},
                          grantedSharedWithFaction=None))]
         VOYEUR = [b.make_effect(
-            type=b.tycon('Granted', grantedActionSet={Actions.PEEP},
+            type=b.tycon('Granted', grantedActionSet={Actions.VOYEUR},
                          grantedSharedWithFaction=None))]
 
     Simple.Actions = Actions

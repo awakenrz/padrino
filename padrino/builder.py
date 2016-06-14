@@ -1,4 +1,7 @@
 import functools
+import jwt
+import os
+import random
 import subprocess
 import yaml
 
@@ -11,7 +14,7 @@ class Ref(object):
 
 
 class Builder(object):
-    def __init__(self):
+    def __init__(self, name, motd=None):
         self.state = {
             'history': [],
             'turn': 1,
@@ -22,17 +25,21 @@ class Builder(object):
         }
 
         self.meta = {
+            'name': name,
+            'motd': motd,
             'actions': {},
             'factions': {},
-            'players': {}
+            'players': {},
+            'secret': random.getrandbits(256).to_bytes(256 // 8, 'little')
         }
 
         self.effect_trace_index = 0
 
     @staticmethod
     def make_rng_state():
-        return subprocess.check_output(['cosanostra-bin/new-rng']) \
-            .strip().decode('utf-8')
+        return subprocess.check_output([
+            '%s/new-rng' % os.environ['COSANOSTRA_BIN_DIR']
+        ]).strip().decode('utf-8')
 
     def declare_action(self, command, description, **kwargs):
         kwargs.setdefault('compulsion', 'Voluntary')
@@ -89,11 +96,22 @@ class Builder(object):
     def tycon(tag, **kwargs):
         return {tag: kwargs if kwargs else []}
 
-    def build_state(self):
-        return yaml.dump(self.state, Dumper=Dumper)
+    def build_state(self, stream=None):
+        return yaml.dump(self.state, stream, Dumper=Dumper)
 
-    def build_meta(self):
-        return yaml.safe_dump(self.meta, Dumper=Dumper)
+    def build_meta(self, stream=None):
+        return yaml.dump(self.meta, stream, Dumper=Dumper)
+
+    def write(self, directory):
+        with open(os.path.join(directory, 'state.yml'), 'w') as f:
+            self.build_state(f)
+
+        with open(os.path.join(directory, 'meta.yml'), 'w') as f:
+            self.build_meta(f)
+
+    def encode_token(self, who):
+        return jwt.encode({'t': who.token}, self.meta['secret'],
+                          algorithm='HS256')
 
 
 class Dumper(yaml.SafeDumper):
