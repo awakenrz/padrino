@@ -177,9 +177,9 @@ class Phase extends React.Component {
         return hours + ':' + minutes + ':' + seconds;
     }
 
-    heading(name) {
+    heading(name, suffix="") {
         let timeLeft = this.props.end - this.state.now;
-        return <h3>{name} {this.props.turn} <small>{timeLeft > 0 ? "ends in " + this.formatDuration(timeLeft) : "ending..."}</small></h3>;
+        return <h3>{name} {this.props.turn} <small>{timeLeft > 0 ? "ends in " + this.formatDuration(timeLeft) + suffix : "ending..."}</small></h3>;
     }
 }
 
@@ -274,7 +274,7 @@ class Ballot extends Phase {
         let timeLeft = this.props.end - this.state.now;
 
         return <div>
-            {this.heading("Day")}
+            {this.heading("Day", this.props.hammer ? " or strict majority reached" : "")}
 
             <ul>
                 {Object.keys(this.props.ballot.votes).sort().map((e, i) => {
@@ -418,23 +418,9 @@ class Start extends React.Component {
         return <div>
             <h3>Start</h3>
             <div dangerouslySetInnerHTML={{__html: md.render(this.props.motd)}}></div>
-            <h4>Game Rules</h4>
-            <ul>
-                {this.props.rules.length === 0
-                    ? <li>Nothing special.</li>
-                    : this.props.rules.map((r, i) =>
-                        <li key={i}><strong>{Start.RULES[r].name}:</strong> {Start.RULES[r].description}</li>)}
-            </ul>
         </div>;
     }
 }
-
-Start.RULES = {
-    hammer: {
-        name: 'Hammer',
-        description: 'The day phase immediately ends when there is a strict majority.'
-    }
-};
 
 class GameOver extends React.Component {
     render() {
@@ -632,7 +618,8 @@ class Root extends React.Component {
                                 me={this.state.playerInfo.name}
                                 turn={this.state.publicState.turn}
                                 end={this.state.publicState.phaseEnd}
-                                ballot={this.state.phaseState.ballot} /> :
+                                ballot={this.state.phaseState.ballot}
+                                hammer={this.state.publicInfo.rules.indexOf('hammer') !== -1} /> :
                         <GameOver winners={this.state.phaseState.winners}
                                   me={this.state.playerInfo.name} />}
                     {results}
