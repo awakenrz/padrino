@@ -438,8 +438,22 @@ class Client {
     constructor() {
         this.onRootMessage = () => {};
         this.onPhaseEndMessage = () => {};
+        this.onOpen = () => {};
         this.onClose = () => {};
+
+        this.resetBackoff();
         this.connect();
+    }
+
+    resetBackoff() {
+        this.lastReconnect = 0;
+        this.nextReconnect = 1000;
+    }
+
+    stepBackoff() {
+        let lastReconnect = this.lastReconnect;
+        this.lastReconnect = this.nextReconnect;
+        this.nextReconnect += lastReconnect;
     }
 
     connect() {
@@ -447,6 +461,12 @@ class Client {
         this.seqNum = 0;
         this.socket = new WebSocket('ws://' + window.location.host + '/ws?' +
                                     token);
+
+        this.socket.onopen = () => {
+            this.resetBackoff();
+            this.onOpen();
+        };
+
         this.socket.onmessage = (e) => {
             let payload = JSON.parse(e.data);
             let body = payload.body;
@@ -473,7 +493,13 @@ class Client {
         };
 
         this.promises = {};
-        this.socket.onclose = () => this.onClose();
+        this.socket.onclose = () => {
+            this.onClose();
+            window.setTimeout(() => {
+                this.connect();
+                this.stepBackoff();
+            }, this.nextReconnect);
+        };
     }
 
     send(type, body) {
@@ -498,7 +524,10 @@ class Client {
 class Root extends React.Component {
     constructor(props) {
         super(props);
-        this.state = null;
+        this.state = {
+            ready: false,
+            connected: false
+        };
     }
 
     componentWillMount() {
@@ -506,7 +535,11 @@ class Root extends React.Component {
     }
 
     componentDidMount() {
-        this.client.onRootMessage = root => this.setState(root);
+        this.client.onRootMessage = root => {
+            this.setState(root);
+            this.setState({ready: true});
+        };
+
         this.client.onPhaseEndMessage = end => {
             let state = {
                 publicState: end.publicState,
@@ -525,27 +558,23 @@ class Root extends React.Component {
 
             this.setState(state);
         };
+        this.client.onOpen = () => {
+            this.setState({connected: true});
+        };
         this.client.onClose = () => {
-            this.setState({closed: true})
+            this.setState({connected: false});
         };
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (this.state.publicInfo !== null) {
+        if (this.state.ready) {
             document.title = this.state.publicInfo.name;
         }
     }
 
     render() {
-        if (this.state === null) {
+        if (!this.state.ready) {
             return <div>Loading...</div>;
-        }
-
-        if (this.state.closed === true) {
-            return <div>
-                <p>Lost connection to server.</p>
-                <p>Please refresh the page.</p>
-            </div>;
         }
 
         let results = [];
@@ -570,6 +599,10 @@ class Root extends React.Component {
             <div className="row">
                 <div className="col-md-12"><h1>{this.state.publicInfo.name}</h1></div>
             </div>
+
+            {!this.state.connected
+                ? <div className="alert alert-warning">Lost server connection. We'll be back shortly!</div>
+                : null}
 
             <div className="row">
                 <div className="col-md-10 col-md-push-2">
