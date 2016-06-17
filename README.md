@@ -43,7 +43,7 @@
    alice = b.declare_player('Alice', 'Town Doctor', s.TOWN() + s.DOCTOR())
    bob = b.declare_player('Bob', 'Vanilla Townie', s.TOWN())
    eve = b.declare_player('Eve', 'Mafia Goon', s.MAFIA())
-   mallory = b.declare_godfather('Mallory', 'Mafia Godfather', s.MAFIA() + s.GODFATHER())
+   mallory = b.declare_player('Mallory', 'Mafia Godfather', s.MAFIA() + s.GODFATHER())
 
    b.make_friends([eve, mallory])
 
