@@ -28,9 +28,10 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 class GameSocketHandler(tornado.websocket.WebSocketHandler):
-    def initialize(self, game, connections):
+    def initialize(self, game, connections, updater):
         self.game = game
         self.connections = connections
+        self.updater = updater
 
     def open(self):
         token = self.request.query.encode('utf-8')
@@ -96,7 +97,10 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
         else:
             target = players[body['target']]
 
-        self.game.vote(self.me_id, target)
+        if 'hammer' in self.game.meta['rules'] and \
+           self.game.vote(self.me_id, target):
+            self.updater.run()
+            return
 
         # Notify other users about our vote.
         for player_id, connections in self.connections.items():
@@ -129,52 +133,67 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
             'body': payload['seqNum']
         })
 
+
 class PokeHandler(tornado.web.RequestHandler):
-    def initialize(self, game, connections):
+    def initialize(self, game, updater):
         self.game = game
-        self.connections = connections
+        self.updater = updater
 
     def get(self):
         if not self.game.check_poke_token(self.request.query.encode('utf-8')):
             self.send_error(403)
             return
-        do_update(self.game, self.connections)
+        self.updater.run()
         self.finish('ok')
 
 
-def do_update(g, connections):
-    logger.info("Running scheduled update.")
+class Updater(object):
+    def __init__(self, game, connections):
+        self.game = game
+        self.connections = connections
+        self.schedule_handle = None
+        self.ioloop = tornado.ioloop.IOLoop.current()
 
-    turn = g.state['turn']
-    phase = g.meta['phase']
+    def run(self):
+        if self.schedule_handle is not None:
+            self.ioloop.remove_timeout(self.schedule_handle)
+            self.schedule_handle = None
 
-    g.finish_phase()
+        logger.info("Running scheduled update.")
 
-    for player_id, conns in connections.items():
-        for conn in conns:
-            conn.write_message({
-                'type': 'pend',
-                'body': {
-                    'publicState': g.get_public_state(),
-                    'phaseState': g.get_phase_state(player_id),
-                    'phase': phase,
-                    'result': g.get_day_result(turn)
-                              if phase == game.Game.DAY else
-                              g.get_night_result_view(turn, player_id)
-                }
-            })
+        turn = self.game.state['turn']
+        phase = self.game.meta['phase']
 
-    schedule_update(g, connections)
+        self.game.finish_phase()
 
+        for player_id, connections in self.connections.items():
+            for connection in connections:
+                connection.write_message({
+                    'type': 'pend',
+                    'body': {
+                        'publicState': self.game.get_public_state(),
+                        'phaseState': self.game.get_phase_state(player_id),
+                        'phase': phase,
+                        'result': self.game.get_day_result(turn)
+                                  if phase == game.Game.DAY else
+                                  self.game.get_night_result_view(turn,
+                                                                  player_id)
+                    }
+                })
 
-def schedule_update(g, connections):
-    phase_end = g.meta['schedule']['phase_end']
+        self.schedule_update()
 
-    logger.info("Scheduled next update: %s",
-                datetime.datetime.fromtimestamp(phase_end))
+    def schedule_update(self):
+        if self.game.is_game_over():
+            logger.info("Game over!")
+            return
 
-    tornado.ioloop.IOLoop.current().call_at(phase_end, functools.partial(
-        do_update, g, connections))
+        phase_end = self.game.meta['schedule']['phase_end']
+
+        logger.info("Scheduled next update: %s",
+                    datetime.datetime.fromtimestamp(phase_end))
+
+        self.schedule_handle = self.ioloop.call_at(phase_end, self.run)
 
 
 def make_app():
@@ -190,12 +209,13 @@ def make_app():
 
     connections = {}
 
-    schedule_update(g, connections)
+    updater = Updater(g, connections)
 
     return tornado.web.Application([
         (r'/', MainHandler),
-        (r'/_poke', PokeHandler, {'game': g, 'connections': connections}),
-        (r'/ws', GameSocketHandler, {'game': g, 'connections': connections}),
+        (r'/_poke', PokeHandler, {'game': g, 'updater': updater}),
+        (r'/ws', GameSocketHandler, {'game': g, 'connections': connections,
+                                     'updater': updater}),
         (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(
             os.path.dirname(__file__), 'static')}),
     ], debug=tornado.options.options.debug, template_path=os.path.join(

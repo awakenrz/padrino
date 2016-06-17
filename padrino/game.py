@@ -211,7 +211,8 @@ class Game(object):
     def get_public_info(self):
         return {
             'name': self.meta['name'],
-            'motd': self.meta['motd']
+            'motd': self.meta['motd'],
+            'rules': list(self.meta['rules'])
         }
 
     def get_player_info(self, player_id):

@@ -418,9 +418,23 @@ class Start extends React.Component {
         return <div>
             <h3>Start</h3>
             <div dangerouslySetInnerHTML={{__html: md.render(this.props.motd)}}></div>
+            <h4>Game Rules</h4>
+            <ul>
+                {this.props.rules.length === 0
+                    ? <li>Nothing special.</li>
+                    : this.props.rules.map((r, i) =>
+                        <li key={i}><strong>{Start.RULES[r].name}:</strong> {Start.RULES[r].description}</li>)}
+            </ul>
         </div>;
     }
 }
+
+Start.RULES = {
+    hammer: {
+        name: 'Hammer',
+        description: 'The day phase immediately ends when there is a strict majority.'
+    }
+};
 
 class GameOver extends React.Component {
     render() {
@@ -622,7 +636,8 @@ class Root extends React.Component {
                         <GameOver winners={this.state.phaseState.winners}
                                   me={this.state.playerInfo.name} />}
                     {results}
-                    <Start motd={this.state.publicInfo.motd} />
+                    <Start motd={this.state.publicInfo.motd}
+                           rules={this.state.publicInfo.rules} />
                 </div>
 
                 <div className="col-md-2 col-md-pull-10">

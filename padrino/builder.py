@@ -20,7 +20,10 @@ class Ref(object):
 
 class Builder(object):
     def __init__(self, name, motd=None, night_end=datetime.time(10, 0),
-                 day_end=datetime.time(12, 15), tz='Etc/UTC'):
+                 day_end=datetime.time(12, 15), tz='Etc/UTC', rules=None):
+        if rules is None:
+            rules = set()
+
         self.state = {
             'history': [],
             'turn': 1,
@@ -45,6 +48,7 @@ class Builder(object):
             'actions': {},
             'factions': {},
             'players': {},
+            'rules': rules,
             'secret': random.getrandbits(256).to_bytes(256 // 8, 'little')
         }
 
