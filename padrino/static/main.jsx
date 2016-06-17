@@ -91,7 +91,7 @@ class Action extends React.Component {
 
         return <li>
             <form className="form-horizontal" onSubmit={this.onSubmit.bind(this)}>
-                <fieldset className={!this.props.action.available ? "unavailable" : ""} disabled={!this.props.action.available || this.state.waiting}>
+                <fieldset style={{'text-decoration': !this.props.action.available ? 'line-through' : ''}} disabled={!this.props.action.available || this.state.waiting}>
                     <div className="form-inline">
                         {this.state.command.parts.map((part, i) => {
                             switch (part.type) {
