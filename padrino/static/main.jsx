@@ -394,7 +394,7 @@ class Profile extends React.Component {
                 <dd>
                     {this.props.friends.length > 0 ? <ul>
                         {this.props.friends.sort().map(name => <li key={name}>{name}</li>)}
-                    </ul> : <em>(none)</em>}
+                    </ul> : 'none'}
                 </dd>
 
                 <dt>Players</dt>
@@ -426,7 +426,9 @@ class GameOver extends React.Component {
     render() {
         return <div>
             <h3>Game Over</h3>
-            <p>Congratulations! The winners are:</p>
+            <p>{this.props.winners.indexOf(this.props.me) !== -1
+                ? 'Congratulations!'
+                : 'Better luck next time!'} The winners are:</p>
             <ul>
                 {this.props.winners.sort().map(e => <li key={e}>{e}</li>)}
             </ul>
@@ -617,7 +619,8 @@ class Root extends React.Component {
                                 turn={this.state.publicState.turn}
                                 end={this.state.publicState.phaseEnd}
                                 ballot={this.state.phaseState.ballot} /> :
-                        <GameOver winners={this.state.phaseState.winners} />}
+                        <GameOver winners={this.state.phaseState.winners}
+                                  me={this.state.playerInfo.name} />}
                     {results}
                     <Start motd={this.state.publicInfo.motd} />
                 </div>
