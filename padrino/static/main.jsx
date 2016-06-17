@@ -107,13 +107,17 @@ class Action extends React.Component {
                                                 <option value={candidate} key={candidate}>{candidate}</option>)}
                                         </select>;
                                     } else {
-                                        return targets === null ? <em key={i}>no one</em> : <span key={i}>{targets[part.group]}</span>;
+                                        return targets === null ? <em key={i}>{this.props.action.compulsion !== 'Forced' ? 'no one' : 'someone'}</em> : <span key={i}>{targets[part.group]}</span>;
                                     }
                             }
-                        })}
+                        })} {this.props.action.compulsion === 'Forced'
+                            ? <em>(forced)</em>
+                            : this.props.action.compulsion === 'Required'
+                                ? <em>(compelled)</em>
+                                : null}
                         {this.props.annotation ? <div><em>{this.props.annotation}</em></div> : null}
 
-                        {!this.state.editing && this.props.action.available && this.props.onPlan
+                        {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onPlan
                             ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                             : null}
                     </div>
