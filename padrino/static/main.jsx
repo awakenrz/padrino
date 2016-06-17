@@ -91,7 +91,7 @@ class Action extends React.Component {
 
         return <li>
             <form className="form-horizontal" onSubmit={this.onSubmit.bind(this)}>
-                <fieldset style={{'text-decoration': !this.props.action.available ? 'line-through' : ''}} disabled={!this.props.action.available || this.state.waiting}>
+                <fieldset style={{textDecoration: !this.props.action.available ? 'line-through' : ''}} disabled={!this.props.action.available || this.state.waiting}>
                     <div className="form-inline">
                         {this.state.command.parts.map((part, i) => {
                             switch (part.type) {
@@ -438,6 +438,7 @@ class Client {
     constructor() {
         this.onRootMessage = () => {};
         this.onPhaseEndMessage = () => {};
+        this.onClose = () => {};
         this.connect();
     }
 
@@ -472,7 +473,7 @@ class Client {
         };
 
         this.promises = {};
-        //this.socket.onclose = (e) => this.connect();
+        this.socket.onclose = () => this.onClose();
     }
 
     send(type, body) {
@@ -524,6 +525,9 @@ class Root extends React.Component {
 
             this.setState(state);
         };
+        this.client.onClose = () => {
+            this.setState({closed: true})
+        };
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -535,6 +539,13 @@ class Root extends React.Component {
     render() {
         if (this.state === null) {
             return <div>Loading...</div>;
+        }
+
+        if (this.state.closed === true) {
+            return <div>
+                <p>Lost connection to server.</p>
+                <p>Please refresh the page.</p>
+            </div>;
         }
 
         let results = [];
