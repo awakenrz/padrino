@@ -45,9 +45,7 @@ class Builder(object):
             'actions': {},
             'factions': {},
             'players': {},
-            'secret': base64.urlsafe_b64encode(
-                random.getrandbits(256).to_bytes(256 // 8, 'little')
-            ).decode('utf-8')
+            'secret': random.getrandbits(256).to_bytes(256 // 8, 'little')
         }
 
         self.effect_trace_index = 0

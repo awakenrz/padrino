@@ -15,6 +15,13 @@ from padrino import game
 logger = logging.getLogger(__name__)
 
 
+tornado.options.define('debug', default=False, help='debug mode')
+tornado.options.define('game_path', default='game', help='path to the game')
+tornado.options.define('listen_port', default=8888, help='port to listen on')
+tornado.options.define('listen_host', default='127.0.0.1',
+                       help='host to listen on')
+
+
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('main.html')
@@ -128,7 +135,7 @@ class PokeHandler(tornado.web.RequestHandler):
         self.connections = connections
 
     def get(self):
-        if self.request.query != self.game.meta['secret']:
+        if not self.game.check_poke_token(self.request.query.encode('utf-8')):
             self.send_error(403)
             return
         do_update(self.game, self.connections)
@@ -171,7 +178,9 @@ def schedule_update(g, connections):
 
 
 def make_app():
-    g = game.Game('game')
+    g = game.Game(tornado.options.options.game_path)
+
+    logger.info('Poke token: %s', g.make_poke_token())
 
     logger.info('Tokens:\n%s', '\n'.join(
         '%10s: %s' % (name, token)
@@ -189,7 +198,7 @@ def make_app():
         (r'/ws', GameSocketHandler, {'game': g, 'connections': connections}),
         (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(
             os.path.dirname(__file__), 'static')}),
-    ], debug=True, autoreload=True, template_path=os.path.join(
+    ], debug=tornado.options.options.debug, template_path=os.path.join(
         os.path.dirname(__file__), 'templates'))
 
 
@@ -197,7 +206,10 @@ def main():
     tornado.options.parse_command_line()
 
     app = make_app()
-    app.listen(8888)
+    app.listen(tornado.options.options.listen_port,
+               tornado.options.options.listen_host)
+    logger.info("Listening: %s:%d", tornado.options.options.listen_host,
+                tornado.options.options.listen_port)
     tornado.ioloop.IOLoop.current().start()
 
 

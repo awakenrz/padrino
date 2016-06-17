@@ -1,4 +1,3 @@
-import base64
 import datetime
 import logging
 import os
@@ -255,15 +254,19 @@ class Game(object):
         return {player['name']: self.encode_token(player_id)
                 for player_id, player in self.meta['players'].items()}
 
-    def get_secret(self):
-        return base64.urlsafe_b64decode(self.meta['secret'].encode('utf-8'))
+    def make_poke_token(self):
+        return jwt.encode({'p': True}, self.meta['secret'],
+                          algorithm='HS256').decode('utf-8')
+
+    def check_poke_token(self, token):
+        return jwt.decode(token, self.meta['secret'], algorithms=['HS256'])['p']
 
     def encode_token(self, id):
-        return jwt.encode({'t': id}, self.get_secret(),
+        return jwt.encode({'t': id}, self.meta['secret'],
                           algorithm='HS256').decode('utf-8')
 
     def decode_token(self, token):
-        return jwt.decode(token, self.get_secret(), algorithms=['HS256'])['t']
+        return jwt.decode(token, self.meta['secret'], algorithms=['HS256'])['t']
 
     def get_night_end(self):
         return datetime.datetime.strptime(
