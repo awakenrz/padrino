@@ -1,9 +1,14 @@
+import base64
+import datetime
 import functools
 import jwt
 import os
+import pytz
 import random
-import subprocess
 import yaml
+
+
+from padrino import glue
 
 
 class Ref(object):
@@ -14,32 +19,44 @@ class Ref(object):
 
 
 class Builder(object):
-    def __init__(self, name, motd=None):
+    def __init__(self, name, motd=None, night_end=datetime.time(10, 0),
+                 day_end=datetime.time(12, 15), tz='Etc/UTC'):
         self.state = {
             'history': [],
             'turn': 1,
             'actions': {},
             'factions': {},
             'players': {},
-            'rng': self.make_rng_state()
+            'rng': glue.run('new-rng')
         }
+
+        tzinfo = pytz.timezone(tz)
 
         self.meta = {
             'name': name,
+            'phase': 0,
+            'schedule': {
+                'night_end': night_end.isoformat(),
+                'day_end': day_end.isoformat(),
+                'phase_end': None,
+                'tz': tz,
+            },
             'motd': motd,
             'actions': {},
             'factions': {},
             'players': {},
-            'secret': random.getrandbits(256).to_bytes(256 // 8, 'little')
+            'secret': base64.urlsafe_b64encode(
+                random.getrandbits(256).to_bytes(256 // 8, 'little')
+            ).decode('utf-8')
         }
 
         self.effect_trace_index = 0
+        self.action_group = 0
 
-    @staticmethod
-    def make_rng_state():
-        return subprocess.check_output([
-            '%s/new-rng' % os.environ['COSANOSTRA_BIN_DIR']
-        ]).strip().decode('utf-8')
+    def make_action_group(self):
+        i = self.action_group
+        self.action_group += 1
+        return i
 
     def declare_action(self, command, description, **kwargs):
         kwargs.setdefault('compulsion', 'Voluntary')
@@ -54,13 +71,13 @@ class Builder(object):
         self.state['actions'][ref.token] = ref.traits
         return ref
 
-    def declare_faction(self, name, **kwargs):
+    def declare_faction(self, name, agenda, **kwargs):
         kwargs.setdefault('winCondition', self.tycon('Primary'))
-        kwargs.setdefault('membersKnown', False)
-        kwargs.setdefault('actionSets', [])
+        kwargs.setdefault('inCahoots', False)
 
         ref = Ref(len(self.meta['factions']), {
-            'name': name
+            'name': name,
+            'agenda': agenda
         }, kwargs)
         self.meta['factions'][ref.token] = ref.meta
         self.state['factions'][ref.token] = ref.traits
@@ -84,10 +101,8 @@ class Builder(object):
             'turns': turns,
             'uses': uses,
             'affectsDay': affectsDay,
-            'trace': {
-                'index': self.effect_trace_index,
-                'origin': self.tycon('EffectFromStart')
-            }
+            'trace': self.tycon('EffectFromStart',
+                                index=self.effect_trace_index)
         }
         self.effect_trace_index += 1
         return effect
@@ -97,33 +112,31 @@ class Builder(object):
         return {tag: kwargs if kwargs else []}
 
     def build_state(self, stream=None):
-        return yaml.dump(self.state, stream, Dumper=Dumper)
+        return yaml.dump(self.state, stream, Dumper=StateDumper)
 
     def build_meta(self, stream=None):
-        return yaml.dump(self.meta, stream, Dumper=Dumper)
+        return yaml.dump(self.meta, stream, default_flow_style=False)
 
     def write(self, directory):
+        os.mkdir(directory)
+
         with open(os.path.join(directory, 'state.yml'), 'w') as f:
             self.build_state(f)
 
         with open(os.path.join(directory, 'meta.yml'), 'w') as f:
             self.build_meta(f)
 
-    def encode_token(self, who):
-        return jwt.encode({'t': who.token}, self.meta['secret'],
-                          algorithm='HS256')
 
-
-class Dumper(yaml.SafeDumper):
+class StateDumper(yaml.SafeDumper):
     def ignore_aliases(self, data):
         return True
 
 
-@functools.partial(Dumper.add_representer, set)
+@functools.partial(StateDumper.add_representer, set)
 def set_representer(dumper, data):
     return dumper.represent_list(data)
 
 
-@functools.partial(Dumper.add_representer, Ref)
+@functools.partial(StateDumper.add_representer, Ref)
 def ref_representer(dumper, data):
     return dumper.represent_scalar('tag:yaml.org,2002:int', str(data.token))
