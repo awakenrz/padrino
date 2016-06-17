@@ -119,7 +119,7 @@ class Game(object):
             'deaths': [self.meta['players'][player]
                        for player in result['deaths']],
             'lynched': self.meta['players'][result['lynched']]
-                       if result['lynched'] else None
+                       if result['lynched'] is not None else None
         }
 
     def get_player_id_map(self):
