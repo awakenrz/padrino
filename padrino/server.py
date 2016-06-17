@@ -97,8 +97,8 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
         else:
             target = players[body['target']]
 
-        if 'hammer' in self.game.meta['rules'] and \
-           self.game.vote(self.me_id, target):
+        has_majority = self.game.vote(self.me_id, target)
+        if 'hammer' in self.game.meta['rules'] and has_majority:
             self.updater.run()
             return
 
