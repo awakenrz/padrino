@@ -53,6 +53,15 @@ class Builder(object):
         self.effect_trace_index = 0
         self.action_group = 0
 
+    def make_friends(self, players):
+        for player in players:
+            for friend in players:
+                if player is friend:
+                    continue
+
+                player.traits.append(self.make_effect(
+                    type=self.tycon('Friendship', friend=friend)))
+
     def make_action_group(self):
         i = self.action_group
         self.action_group += 1

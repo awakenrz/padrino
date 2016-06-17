@@ -10,8 +10,7 @@ def make_simple(b):
             'Eradicate all members of the mafia.')
         MAFIA = b.declare_faction(
             'Mafia',
-            'Eradicate all members of the town.',
-            inCahoots=True)
+            'Eradicate all members of the town.')
 
     MAFIA_ACTION_GROUP = b.make_action_group()
 

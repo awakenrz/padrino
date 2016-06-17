@@ -226,7 +226,8 @@ class Game(object):
             'role': player_meta['role'],
             'faction': faction_meta['name'],
             'agenda': faction_meta['agenda'],
-            'cohorts': self.get_player_cohorts(player_id),
+            'friends': [self.meta['players'][friend]['name']
+                        for friend in self.players[player_id]['friends']]
         }
 
     def get_public_state(self):
@@ -243,16 +244,6 @@ class Game(object):
                 if player['dead'] else None
             for player_id, player in self.players.items()
         }
-
-    def get_player_cohorts(self, player_id):
-        faction_id = self.players[player_id]['faction']
-
-        if not self.state['factions'][faction_id]['inCahoots']:
-            return []
-
-        return [self.meta['players'][player_id]['name']
-                for player_id, player in self.players.items()
-                if player['faction'] == faction_id]
 
     def get_phases(self):
         # Get all turns except this one.

@@ -390,10 +390,10 @@ class Profile extends React.Component {
                 <dt>Agenda</dt>
                 <dd>{this.props.agenda}</dd>
 
-                <dt>Cohorts</dt>
+                <dt>Friends</dt>
                 <dd>
-                    {this.props.cohorts.length > 0 ? <ul>
-                        {this.props.cohorts.sort().map(name => <li key={name}>{name}</li>)}
+                    {this.props.friends.length > 0 ? <ul>
+                        {this.props.friends.sort().map(name => <li key={name}>{name}</li>)}
                     </ul> : <em>(none)</em>}
                 </dd>
 
@@ -583,7 +583,7 @@ class Root extends React.Component {
                              role={this.state.playerInfo.role}
                              faction={this.state.playerInfo.faction}
                              agenda={this.state.playerInfo.agenda}
-                             cohorts={this.state.playerInfo.cohorts}
+                             friends={this.state.playerInfo.friends}
                              players={this.state.publicState.players} />
                 </div>
             </div>
