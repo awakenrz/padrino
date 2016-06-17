@@ -1,5 +1,6 @@
 const NIGHT = 0;
 const DAY = 1;
+const OVER = 2;
 
 function parseCommand(command) {
     let parts = [];
@@ -417,6 +418,18 @@ class Start extends React.Component {
     }
 }
 
+class GameOver extends React.Component {
+    render() {
+        return <div>
+            <h3>Game Over</h3>
+            <p>Congratulations! The winners are:</p>
+            <ul>
+                {this.props.winners.sort().map(e => <li key={e}>{e}</li>)}
+            </ul>
+        </div>;
+    }
+}
+
 class Client {
     constructor() {
         this.onRootMessage = () => {};
@@ -525,13 +538,13 @@ class Root extends React.Component {
         for (let i = this.state.publicState.turn; i >= 1; --i) {
             var last = i == this.state.publicState.turn;
 
-            if (!last) {
+            if (i <= this.state.dayResults.length) {
                 results.push(<DayResult turn={i}
                                         key={'d' + i}
                                         result={this.state.dayResults[i - 1]} />);
             }
 
-            if (!last || this.state.phaseState.phase == DAY) {
+            if (i <= this.state.nightResults.length) {
                 results.push(<NightResult turn={i}
                                           key={'n' + i}
                                           result={this.state.nightResults[i - 1]} />);
@@ -550,11 +563,13 @@ class Root extends React.Component {
                               turn={this.state.publicState.turn}
                               end={this.state.publicState.phaseEnd}
                               plan={this.state.phaseState.plan} /> :
+                     this.state.phaseState.phase == DAY ?
                         <Ballot client={this.client}
                                 me={this.state.playerInfo.name}
                                 turn={this.state.publicState.turn}
                                 end={this.state.publicState.phaseEnd}
-                                ballot={this.state.phaseState.ballot} />}
+                                ballot={this.state.phaseState.ballot} /> :
+                        <GameOver winners={this.state.phaseState.winners} />}
                     {results}
                     <Start motd={this.state.publicInfo.motd} />
                 </div>

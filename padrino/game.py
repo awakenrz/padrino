@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 class Game(object):
     NIGHT = 0
     DAY = 1
+    OVER = 2
 
     def __init__(self, root):
         self.root = root
@@ -48,13 +49,30 @@ class Game(object):
     def load_players(self):
         self.players = glue.run('view-players', self.state_path)
 
+    def get_raw_fates(self):
+        return glue.run('view-fates', self.state_path)
+
+    def is_game_over(self):
+        return all(fate is not None for fate in self.get_raw_fates().values())
+
     def get_phase_state(self, player_id):
+        fates = self.get_raw_fates()
+
+        if self.is_game_over():
+            return {
+                'phase': self.OVER,
+                'winners': [self.meta['players'][player_id]['name']
+                            for player_id, player in self.players.items()
+                            if fates[player['faction']]]
+            }
+
         if self.meta['phase'] == self.NIGHT:
             return {
                 'phase': self.NIGHT,
                 'plan': self.get_plan_view(player_id)
             }
-        elif self.meta['phase'] == self.DAY:
+
+        if self.meta['phase'] == self.DAY:
             return {
                 'phase': self.DAY,
                 'ballot': self.get_ballot()
@@ -324,6 +342,8 @@ class Game(object):
         elif self.meta['phase'] == self.DAY:
             self.meta['phase'] = self.NIGHT
             self.run_day()
+        else:
+            raise ValueError('cannot finish this phase')
 
         self.meta['schedule']['phase_end'] = self.get_next_end()
         self.save_meta()
