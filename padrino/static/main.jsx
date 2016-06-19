@@ -492,10 +492,10 @@ class Start extends React.Component {
     }
 }
 
-class GameOver extends React.Component {
+class End extends React.Component {
     render() {
         return <div>
-            <h3>Game Over</h3>
+            <h3>End</h3>
             <p>{this.props.winners.indexOf(this.props.me) !== -1
                 ? 'Congratulations!'
                 : 'Better luck next time!'} The winners are:</p>
@@ -507,7 +507,7 @@ class GameOver extends React.Component {
                 {Object.keys(this.props.roles).sort().map(player =>
                     <li key={player}><strong>{player}</strong>: {this.props.roles[player]}</li>)}
             </ul>
-            <h4>Game log</h4>
+            <h4>Action Log</h4>
             {this.props.log.map((e, i) => <div key={i}>
                 <h5>{e.phase} {e.turn}</h5>
                 <ul>{e.acts.length > 0 ? e.acts.map((e, i) => {
@@ -722,10 +722,10 @@ class Root extends React.Component {
                              deaths={this.state.phaseState.deaths}
                              messages={this.state.phaseState.messages}
                              hammer={this.state.publicInfo.rules.indexOf('hammer') !== -1} /> :
-                        <GameOver winners={this.state.phaseState.winners}
-                                  log={this.state.phaseState.log}
-                                  roles={this.state.phaseState.roles}
-                                  me={this.state.playerInfo.name} />}
+                        <End winners={this.state.phaseState.winners}
+                             log={this.state.phaseState.log}
+                             roles={this.state.phaseState.roles}
+                             me={this.state.playerInfo.name} />}
                     {results}
                     <Start motd={this.state.publicInfo.motd}
                            rules={this.state.publicInfo.rules} />

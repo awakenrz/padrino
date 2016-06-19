@@ -52,7 +52,7 @@ class Game(object):
 
         if self.is_game_over():
             return {
-                'phase': 'Over',
+                'phase': 'End',
                 'winners': [self.meta['players'][player_id]['name']
                             for player_id, player in self.players.items()
                             if fates[player['faction']]],
@@ -71,8 +71,13 @@ class Game(object):
             }
 
         if self.state['phase'] == 'Day':
+            # We need to get the plan in this way such that we can see actions
+            # on their last use that are in the plan.
             raw_plan = self.filter_raw_plan_view(
-                player_id, self.get_current_raw_plan_view())
+                player_id,
+                glue.run('view-plan',
+                    self.state_path + '.day.' + str(self.state['turn']),
+                    self.plan_path))
 
             return {
                 'phase': 'Day',
@@ -267,7 +272,6 @@ class Game(object):
             'available': info['available'],
             'compulsion': info['compulsion']
         } for info in raw]
-
 
     def get_current_plan_view(self, player_id):
         return self.interpret_raw_plan_view(
