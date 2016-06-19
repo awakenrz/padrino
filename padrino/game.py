@@ -19,9 +19,6 @@ class Game(object):
         self.state_path = os.path.join(self.root, 'state.yml')
         self.meta_path = os.path.join(self.root, 'meta.yml')
 
-        self.executed_path = os.path.join(self.root, 'executed.yml')
-        self.day_result_path = os.path.join(self.root, 'day_result.yml')
-
         self.plan_path = os.path.join(self.root, 'plan.yml')
         self.ballot_path = os.path.join(self.root, 'ballot.yml')
 
@@ -79,8 +76,8 @@ class Game(object):
 
             return {
                 'phase': 'Day',
-                'ballot': self.get_ballot(),
-                'executed': self.get_current_executed_view(),
+                'ballot': self.get_current_ballot(),
+                'deaths': self.get_current_deaths_view(),
                 'messages': self.get_current_messages_view(player_id, raw_plan),
                 'plan': self.interpret_raw_plan_view(raw_plan),
             }
@@ -160,67 +157,63 @@ class Game(object):
         return [message for message in messages
                 if message['recipient'] == player_id]
 
-    def get_current_messages_view(self, player_id, raw_plan):
-        return self.interpret_messages(raw_plan, self.filter_messages(
-            player_id,
-            glue.run('view-messages', self.state_path, self.executed_path)))
 
     def get_messages_view(self, turn, phase, player_id, raw_plan):
-        state_path = self.state_path + '.' + phase + '.post.' + str(turn)
-        executed_path = self.executed_path + '.' + phase + '.' + str(turn)
+        state_path = self.state_path + '.' + phase + '.' + str(turn)
+        state_post_path = self.state_path + '.' + phase + '.post.' + str(turn)
 
         return self.interpret_messages(raw_plan, self.filter_messages(
             player_id,
-            glue.run('view-messages', state_path, executed_path)))
+            glue.run('view-messages', state_path, state_post_path)))
 
-    def interpret_raw_executed(self, executed):
-        return {
-            'deaths': [self.meta['players'][player]
-                       for player in executed['deaths']]
-        }
+    def interpret_raw_deaths(self, deaths):
+        return [{
+            'name': self.meta['players'][player]['name'],
+            'role': self.meta['players'][player]['role'],
+            'lynched': cause == 'Lynched'
+        } for player, cause in deaths.items()]
 
-    def get_current_executed_view(self):
-        with open(self.executed_path, 'r') as f:
-            executed = yaml.load(f)
+    def get_current_messages_view(self, player_id, raw_plan):
+        state_pre_path = self.state_path + '.night.post.' + \
+                         str(self.state['turn'])
+        return self.interpret_messages(raw_plan, self.filter_messages(
+            player_id,
+            glue.run('view-messages', state_pre_path, self.state_path)))
 
-        return self.interpret_raw_executed(executed)
+    def get_current_deaths_view(self):
+        state_pre_path = self.state_path + '.night.post.' + \
+                         str(self.state['turn'])
+        return self.interpret_raw_deaths(glue.run('view-deaths', state_pre_path,
+                                                  self.state_path))
 
-    def get_executed_view(self, turn, phase):
-        with open(self.executed_path + '.' + phase + '.' + str(turn),
-                  'r') as f:
-            executed = yaml.load(f)
+    def get_deaths_view(self, turn, phase):
+        state_path = self.state_path + '.' + phase + '.' + str(turn)
+        state_post_path = self.state_path + '.' + phase + '.post.' + str(turn)
 
-        return self.interpret_raw_executed(executed)
+        return self.interpret_raw_deaths(glue.run('view-deaths', state_path,
+                                                  state_post_path))
 
     def get_night_result_view(self, turn, player_id):
         raw = self.filter_raw_plan_view(player_id,
                                         self.get_raw_plan_view(turn, 'night'))
 
         return {
-            'executed': self.get_executed_view(turn, 'night'),
+            'deaths': self.get_deaths_view(turn, 'night'),
             'messages': self.get_messages_view(turn, 'night', player_id, raw),
             'plan': self.interpret_raw_plan_view(raw)
         }
 
     def get_day_result_view(self, turn, player_id):
-        with open(self.day_result_path + '.day.' + str(turn), 'r') as f:
-            result = yaml.load(f)
-
         raw = self.filter_raw_plan_view(player_id,
                                         self.get_raw_plan_view(turn, 'day'))
 
-        votes = result['votes']
+        deaths = self.get_deaths_view(turn, 'day')
 
         return {
-            'votes': {
-                self.meta['players'][source]['name']:
-                    self.meta['players'][target]['name']
-                    if target is not None else None
-                for source, target in votes.items()
-            },
-            'lynched': self.meta['players'][result['lynched']]
-                       if result['lynched'] is not None else None,
-            'executed': self.get_executed_view(turn, 'day'),
+            'ballot': self.get_ballot(turn),
+            'lynched': next((death for death in deaths
+                             if death['lynched']), None),
+            'deaths': [death for death in deaths if not death['lynched']],
             'messages': self.get_messages_view(turn, 'day', player_id, raw),
             'plan': self.interpret_raw_plan_view(raw)
         }
@@ -275,25 +268,46 @@ class Game(object):
             'compulsion': info['compulsion']
         } for info in raw]
 
+
     def get_current_plan_view(self, player_id):
         return self.interpret_raw_plan_view(
             self.filter_raw_plan_view(player_id,
                                       self.get_current_raw_plan_view()))
 
-    def get_raw_ballot(self):
+    def get_raw_ballot(self, turn):
+        with open(self.ballot_path + '.day.' + str(turn), 'r') as f:
+            return yaml.load(f)
+
+    def get_ballot(self, turn):
+        raw = self.get_raw_ballot(turn)
+        players = glue.run('view-players', self.state_path + '.day.' + str(turn))
+        candidates = [player_id for player_id, player in players.items()
+                      if not player['dead']]
+
+        return {
+            'votes': {
+                self.meta['players'][player_id]['name']:
+                    self.meta['players'][raw[player_id]]['name']
+                    if player_id in raw else None
+                for player_id in candidates},
+            'candidates': [self.meta['players'][player_id]['name']
+                           for player_id in candidates]
+        }
+
+    def get_current_raw_ballot(self):
         with open(self.ballot_path, 'r') as f:
             return yaml.load(f)
 
-    def get_ballot(self):
-        ballot = self.get_raw_ballot()
+    def get_current_ballot(self):
+        raw = self.get_current_raw_ballot()
         candidates = [player_id for player_id, player in self.players.items()
                       if not player['dead']]
 
         return {
             'votes': {
                 self.meta['players'][player_id]['name']:
-                    self.meta['players'][ballot[player_id]]['name']
-                    if player_id in ballot else None
+                    self.meta['players'][raw[player_id]]['name']
+                    if player_id in raw else None
                 for player_id in candidates},
             'candidates': [self.meta['players'][player_id]['name']
                            for player_id in candidates]
@@ -411,8 +425,7 @@ class Game(object):
         if self.state['phase'] != 'Day':
             raise ValueError('not day time')
 
-        glue.run('impulse', self.state_path, self.plan_path,
-                 self.executed_path, input={
+        glue.run('impulse', self.state_path, self.plan_path, input={
             'actionGroup': action_group,
             'action': action,
             'source': source,
@@ -443,18 +456,13 @@ class Game(object):
         self.save_meta()
 
     def run_day(self):
-        state_path = self.state_path + '.day.' + str(self.state['turn'])
         ballot_path = self.ballot_path + '.day.' + str(self.state['turn'])
-        executed_path = self.executed_path + '.day.' + str(self.state['turn'])
         plan_path = self.plan_path + '.day.' + str(self.state['turn'])
-        day_result_path = self.day_result_path + '.day.' + str(self.state['turn'])
 
-        shutil.copy(self.state_path, state_path)
         shutil.copy(self.ballot_path, ballot_path)
-        os.rename(self.executed_path, executed_path)
         os.rename(self.plan_path, plan_path)
 
-        glue.run('run-day', self.state_path, ballot_path, day_result_path)
+        glue.run('run-day', self.state_path, ballot_path)
 
         os.unlink(self.ballot_path)
 
@@ -469,16 +477,17 @@ class Game(object):
     def run_night(self):
         state_path = self.state_path + '.night.' + str(self.state['turn'])
         plan_path = self.plan_path + '.night.' + str(self.state['turn'])
-        executed_path = self.executed_path + '.night.' + str(self.state['turn'])
 
         shutil.copy(self.state_path, state_path)
         shutil.copy(self.plan_path, plan_path)
 
-        glue.run('run-night', self.state_path, plan_path, executed_path)
+        glue.run('run-night', self.state_path, plan_path)
 
         os.unlink(self.plan_path)
 
         shutil.copy(self.state_path, self.state_path + '.night.post.' +
+                    str(self.state['turn']))
+        shutil.copy(self.state_path, self.state_path + '.day.' +
                     str(self.state['turn']))
 
         self.load_state()
@@ -486,9 +495,6 @@ class Game(object):
 
         self.make_ballot()
         self.make_plan()
-
-        with open(self.executed_path, 'w') as f:
-            yaml.dump({'messages': [], 'deaths': [], 'acts': []}, f)
 
     def start(self):
         if self.meta['schedule']['phase_end'] is None:

@@ -327,8 +327,8 @@ class Day extends Phase {
     render() {
         return <div>
             {this.heading("Day", this.props.hammer ? " or strict majority reached" : "")}
-            {this.props.executed.deaths.length > 0
-                ? <p>{this.props.executed.deaths.map(player => player.name + ' the ' + player.role + ' died.').join(' ')}</p>
+            {this.props.deaths.length > 0
+                ? <p>{this.props.deaths.map(player => player.name + ' the ' + player.role + ' died.').join(' ')}</p>
                 : null}
             <ul>
                 {Object.keys(this.props.ballot.votes).sort().map((e, i) => {
@@ -659,10 +659,10 @@ class Root extends React.Component {
                 results.push(<DayResult turn={i}
                                         key={'d' + i}
                                         plan={result.plan}
-                                        deaths={result.executed.deaths}
+                                        deaths={result.deaths}
                                         messages={result.messages}
                                         lynched={result.lynched}
-                                        votes={result.votes} />);
+                                        votes={result.ballot.votes} />);
             }
 
             if (i <= this.state.nightResults.length) {
@@ -670,7 +670,7 @@ class Root extends React.Component {
                 results.push(<NightResult turn={i}
                                           key={'n' + i}
                                           plan={result.plan}
-                                          deaths={result.executed.deaths}
+                                          deaths={result.deaths}
                                           messages={result.messages} />);
             }
         }
@@ -698,7 +698,7 @@ class Root extends React.Component {
                              plan={this.state.phaseState.plan}
                              me={this.state.playerInfo.name}
                              ballot={this.state.phaseState.ballot}
-                             executed={this.state.phaseState.executed}
+                             deaths={this.state.phaseState.deaths}
                              messages={this.state.phaseState.messages}
                              hammer={this.state.publicInfo.rules.indexOf('hammer') !== -1} /> :
                         <GameOver winners={this.state.phaseState.winners}
