@@ -1,7 +1,3 @@
-const NIGHT = 0;
-const DAY = 1;
-const OVER = 2;
-
 function parseCommand(command) {
     let parts = [];
     let groups = 0;
@@ -35,6 +31,33 @@ function parseCommand(command) {
         parts: parts,
         groups: groups
     };
+}
+
+function interpretInfo(info) {
+    switch (info.type) {
+        case 'Investigation':
+            return {
+                name: 'Investigation',
+                description: info.result
+                    ? 'positive (interpret as guilty)'
+                    : 'negative (interpret as not guilty)'
+            };
+        case 'Players':
+            return {
+                name: 'Players',
+                description: info.players.join(', ')
+            };
+        case 'Actions':
+            return {
+                name: 'Actions',
+                description: info.actions.map(command => command.replace(/\$\d+/g, 'someone')).join(', ')
+            };
+        case 'Fruit':
+            return {
+                name: 'Fruit',
+                description: 'how... generous?'
+            };
+    }
 }
 
 class Action extends React.Component {
@@ -72,7 +95,7 @@ class Action extends React.Component {
         }
 
         this.setState({waiting: true});
-        this.props.onPlan(targets).then(() => this.dismiss(),
+        this.props.onSave(targets).then(() => this.dismiss(),
                                         () => this.dismiss());
     }
 
@@ -90,7 +113,7 @@ class Action extends React.Component {
         let editMode = this.state.editing && this.props.action.available;
 
         return <li>
-            <form className="form-horizontal" onSubmit={this.onSubmit.bind(this)}>
+            <form onSubmit={this.onSubmit.bind(this)}>
                 <fieldset style={{textDecoration: !this.props.action.available ? 'line-through' : ''}} disabled={!this.props.action.available || this.state.waiting}>
                     <div className="form-inline">
                         {this.state.command.parts.map((part, i) => {
@@ -117,7 +140,7 @@ class Action extends React.Component {
                                 : null}
                         {this.props.annotation ? <div><em>{this.props.annotation}</em></div> : null}
 
-                        {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onPlan
+                        {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onSave
                             ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                             : null}
                     </div>
@@ -128,7 +151,7 @@ class Action extends React.Component {
 
                     {editMode
                         ? <p className="form-group">
-                            <button type="submit" className="btn btn-primary">Save</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button>
+                            <button type="submit" className={"btn btn-" + this.props.buttonClass}>{this.props.saveCaption}</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button>
                         </p>
                         : null}
                 </fieldset>
@@ -180,21 +203,6 @@ class Phase extends React.Component {
     heading(name, suffix="") {
         let timeLeft = this.props.end - this.state.now;
         return <h3>{name} {this.props.turn} <small>{timeLeft > 0 ? "ends in " + this.formatDuration(timeLeft) + suffix : "ending..."}</small></h3>;
-    }
-}
-
-class Plan extends Phase {
-    onActionPlan(i, targets) {
-        return this.props.client.request('plan', {i: i, targets: targets});
-    }
-
-    render() {
-        return <div>
-            {this.heading("Night")}
-            <ul>
-                {this.props.plan.map((e, i) => <Action key={i} action={e} onPlan={this.onActionPlan.bind(this, i)} />)}
-            </ul>
-        </div>;
     }
 }
 
@@ -269,13 +277,29 @@ class Vote extends React.Component {
     }
 }
 
-class Ballot extends Phase {
+class Meeting extends Phase {
+    onActionSave(i, targets) {
+        return this.props.client.request('impulse', {i: i, targets: targets});
+    }
+
     render() {
         let timeLeft = this.props.end - this.state.now;
+        let infoFor = {};
+        let extra = [];
+
+        this.props.executed.messages.forEach(message => {
+            if (message.i === null) {
+                extra.push(message.info);
+            } else {
+                infoFor[message.i] = message.info;
+            }
+        });
 
         return <div>
             {this.heading("Day", this.props.hammer ? " or strict majority reached" : "")}
-
+            {this.props.executed.deaths.length > 0
+                ? <p>{this.props.executed.deaths.map(player => player.name + ' the ' + player.role + ' died.').join(' ')}</p>
+                : null}
             <ul>
                 {Object.keys(this.props.ballot.votes).sort().map((e, i) => {
                     let target = this.props.ballot.votes[e];
@@ -287,67 +311,117 @@ class Ballot extends Phase {
                                  candidates={this.props.ballot.candidates} />
                 })}
             </ul>
+
+            {this.props.plan.length > 0
+                ? <div>
+                    <p>Additionally, the following instantaneous actions are available:</p>
+                    <ul>
+                        {this.props.plan.map((e, i) => {
+                            let interpreted = Object.prototype.hasOwnProperty.call(infoFor, i)
+                                ? interpretInfo(infoFor[i])
+                                : null;
+                            return <Action key={i} action={e} annotation={interpreted !== null
+                                ? 'Result: ' + interpreted.description
+                                : null} onSave={e.targets === null ? this.onActionSave.bind(this, i) : null}
+                                saveCaption='Run' buttonClass='danger' />;
+                        })}
+                    </ul>
+                </div>
+                : null}
+
+            {extra.length > 0
+                ? <div>
+                    <p>You just received:</p>
+                    <ul>{extra.map((e, i) => {
+                        let interpreted = interpretInfo(e);
+                        return <li key={i}>{interpreted.name}: {interpreted.description}</li>;
+                    })}</ul>
+                </div>
+                : null}
         </div>;
     }
 }
 
 class DayResult extends React.Component {
     render() {
-        let otherDeaths = this.props.result.deaths;
-        if (this.props.result.lynched !== null) {
-            otherDeaths = this.props.result.deaths.filter(player => player.name != this.props.result.lynched.name);
-        }
+        let infoFor = {};
+        let extra = [];
+
+        this.props.result.executed.messages.forEach(message => {
+            if (message.i === null) {
+                extra.push(message.info);
+            } else {
+                infoFor[message.i] = message.info;
+            }
+        });
+
         return <div>
             <h3>Day {this.props.turn} <small>ended</small></h3>
-            {otherDeaths.length > 0
-                ? <p>{otherDeaths.map(player => player.name + ' the ' + player.role + ' was found dead.').join(' ')}</p>
+            {this.props.result.executed.deaths.length > 0
+                ? <p>{this.props.result.executed.deaths.map(player => player.name + ' the ' + player.role + ' died.').join(' ')}</p>
                 : null}
             {this.props.result.lynched !== null
                 ? <p>{this.props.result.lynched.name} the {this.props.result.lynched.role} was lynched.</p>
                 : null}
             <ul>
-                {Object.keys(this.props.result.usedBallot).sort().map((e) => {
-                    let target = this.props.result.usedBallot[e];
+                {Object.keys(this.props.result.votes).sort().map((e) => {
+                    let target = this.props.result.votes[e];
                     return <li key={e}>{e} voted for {target === null ? <em>no one</em> : target}</li>;
                 })}
+            </ul>
+
+            {this.props.result.plan.length > 0
+                ? <div>
+                    <p>Additionally, the following instantaneous actions were available:</p>
+                    <ul>
+                        {this.props.result.plan.map((e, i) => {
+                            let interpreted = Object.prototype.hasOwnProperty.call(infoFor, i)
+                                ? interpretInfo(infoFor[i])
+                                : null;
+                            return <Action key={i} action={e} annotation={interpreted !== null
+                                ? 'Result: ' + interpreted.description
+                                : null} onSave={null} saveCaption='Run' buttonClass='danger' />;
+                        })}
+                    </ul>
+                </div>
+                : null}
+
+            {extra.length > 0
+                ? <div>
+                    <p>You also received:</p>
+                    <ul>{extra.map((e, i) => {
+                        let interpreted = interpretInfo(e);
+                        return <li key={i}>{interpreted.name}: {interpreted.description}</li>;
+                    })}</ul>
+                </div>
+                : null}
+        </div>;
+    }
+}
+
+class Plan extends Phase {
+    onActionSave(i, targets) {
+        return this.props.client.request('plan', {i: i, targets: targets});
+    }
+
+    render() {
+        return <div>
+            {this.heading("Night")}
+            <ul>
+                {this.props.plan.map((e, i) => <Action key={i} action={e} onSave={this.onActionSave.bind(this, i)} saveCaption='Save' buttonClass='primary' />)}
             </ul>
         </div>;
     }
 }
 
 class NightResult extends React.Component {
-    interpretInfo(info) {
-        switch (info.type) {
-            case 'Investigation':
-                return {
-                    name: 'Investigation',
-                    description: info.result ? 'yes' : 'no'
-                };
-            case 'Players':
-                return {
-                    name: 'Players',
-                    description: info.players.join(', ')
-                };
-            case 'Actions':
-                return {
-                    name: 'Actions',
-                    description: info.actions.map(command => command.replace(/\$\d+/g, 'someone')).join(', ')
-                };
-            case 'Fruit':
-                return {
-                    name: 'Fruit',
-                    description: 'how... generous?'
-                };
-        }
-    }
-
     render() {
         let infoFor = {};
-        let spare = [];
+        let extra = [];
 
-        this.props.result.messages.forEach(message => {
+        this.props.result.executed.messages.forEach(message => {
             if (message.i === null) {
-                spare.push(message.info);
+                extra.push(message.info);
             } else {
                 infoFor[message.i] = message.info;
             }
@@ -355,23 +429,29 @@ class NightResult extends React.Component {
 
         return <div>
             <h3>Night {this.props.turn} <small>ended</small></h3>
-            {this.props.result.deaths.length > 0
-                ? <p>{this.props.result.deaths.map(player => player.name + ' the ' + player.role + ' was found dead.').join(' ')}</p>
+            {this.props.result.executed.deaths.length > 0
+                ? <p>{this.props.result.executed.deaths.map(player => player.name + ' the ' + player.role + ' was found dead.').join(' ')}</p>
                 : null}
             <ul>
-                {this.props.result.usedPlan.map((e, i) => {
+                {this.props.result.plan.map((e, i) => {
                     let interpreted = Object.prototype.hasOwnProperty.call(infoFor, i)
-                        ? this.interpretInfo(infoFor[i])
+                        ? interpretInfo(infoFor[i])
                         : null;
                     return <Action key={'p' + i} action={e} annotation={interpreted !== null
                         ? 'Result: ' + interpreted.description
-                        : null} />;
-                })}
-                {spare.map((e, i) => {
-                    let interpreted = this.interpretInfo(e);
-                    return <li key={'s' + i}><em>You also received:<br />{interpreted.name}: {interpreted.description}</em></li>;
+                        : null} onSave={null} buttonClass='primary' />;
                 })}
             </ul>
+
+            {extra.length > 0
+                ? <div>
+                    <p>You also received:</p>
+                    <ul>{extra.map((e, i) => {
+                        let interpreted = interpretInfo(e);
+                        return <li key={i}>{interpreted.name}: {interpreted.description}</li>;
+                    })}</ul>
+                </div>
+                : null}
         </div>;
     }
 }
@@ -379,7 +459,7 @@ class NightResult extends React.Component {
 class Profile extends React.Component {
     render() {
         return <div>
-            <h2>{this.props.name}</h2>
+            <h2 style={{textDecoration: this.props.players[this.props.name] === null ? null : 'line-through'}}>{this.props.name}</h2>
             <dl>
                 <dt>Role</dt>
                 <dd>{this.props.role}</dd>
@@ -549,11 +629,11 @@ class Root extends React.Component {
             };
 
             switch (end.phase) {
-                case NIGHT:
+                case 'Night':
                     state.nightResults = this.state.nightResults.concat([end.result]);
                     break;
 
-                case DAY:
+                case 'Day':
                     state.dayResults = this.state.dayResults.concat([end.result]);
                     break;
             }
@@ -608,17 +688,19 @@ class Root extends React.Component {
 
             <div className="row">
                 <div className="col-md-10 col-md-push-2">
-                    {this.state.phaseState.phase == NIGHT ?
+                    {this.state.phaseState.phase == 'Night' ?
                         <Plan client={this.client}
                               turn={this.state.publicState.turn}
                               end={this.state.publicState.phaseEnd}
                               plan={this.state.phaseState.plan} /> :
-                     this.state.phaseState.phase == DAY ?
-                        <Ballot client={this.client}
+                     this.state.phaseState.phase == 'Day' ?
+                        <Meeting client={this.client}
                                 me={this.state.playerInfo.name}
                                 turn={this.state.publicState.turn}
                                 end={this.state.publicState.phaseEnd}
                                 ballot={this.state.phaseState.ballot}
+                                plan={this.state.phaseState.plan}
+                                executed={this.state.phaseState.executed}
                                 hammer={this.state.publicInfo.rules.indexOf('hammer') !== -1} /> :
                         <GameOver winners={this.state.phaseState.winners}
                                   me={this.state.playerInfo.name} />}

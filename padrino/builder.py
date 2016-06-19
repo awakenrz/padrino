@@ -27,6 +27,7 @@ class Builder(object):
         self.state = {
             'history': [],
             'turn': 1,
+            'phase': 'Night',
             'actions': {},
             'factions': {},
             'players': {},
@@ -37,7 +38,6 @@ class Builder(object):
 
         self.meta = {
             'name': name,
-            'phase': 0,
             'schedule': {
                 'night_end': night_end.isoformat(),
                 'day_end': day_end.isoformat(),
@@ -72,7 +72,6 @@ class Builder(object):
     def declare_action(self, command, description, **kwargs):
         kwargs.setdefault('compulsion', 'Voluntary')
         kwargs.setdefault('ninja', False)
-        kwargs.setdefault('weakTo', set())
 
         ref = Ref(len(self.meta['actions']), {
             'command': command,
@@ -106,12 +105,15 @@ class Builder(object):
         self.state['players'][ref.token] = ref.traits
         return ref
 
-    def make_effect(self, type, turns=None, uses=None, affectsDay=True):
+    def make_effect(self, type, turnsLeft=None, phasesActive=None, uses=None):
+        if phasesActive is None:
+            phasesActive = {'Night', 'Day'}
+
         effect = {
             'type': type,
-            'turns': turns,
+            'turnsLeft': turnsLeft,
+            'phasesActive': phasesActive,
             'uses': uses,
-            'affectsDay': affectsDay,
             'trace': self.tycon('EffectFromStart',
                                 index=self.effect_trace_index)
         }

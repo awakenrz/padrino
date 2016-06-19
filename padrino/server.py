@@ -47,27 +47,60 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                 'playerInfo': self.game.get_player_info(self.me_id),
                 'phaseState': self.game.get_phase_state(self.me_id),
                 'nightResults': self.game.get_night_result_views(self.me_id),
-                'dayResults': self.game.get_day_results()
+                'dayResults': self.game.get_day_result_views(self.me_id)
             }
         })
 
     def on_close(self):
         self.connections[self.me_id].remove(self)
 
+    def on_impulse_message(self, body):
+        if body['targets'] is None:
+            return
+
+        players = self.game.get_player_id_map()
+        raw = self.game.filter_raw_plan_view(
+            self.game.get_current_raw_plan_view(), self.me_id)[body['i']]
+
+        targets = [players[player_name] for player_name in body['targets']]
+
+        old_phase_states = {player_id: self.game.get_phase_state(player_id)
+                            for player_id in self.connections}
+
+        self.game.apply_impulse(raw['actionGroup'], raw['action'], self.me_id,
+                                targets)
+
+        # Notify other users about our plan edit.
+        for player_id, connections in self.connections.items():
+            phase_state = self.game.get_phase_state(player_id)
+
+            if phase_state == old_phase_states[player_id]:
+                # Only send updated plans to users.
+                continue
+
+            for connection in connections:
+                connection.write_message({
+                    'type': 'root',
+                    'body': {
+                        'publicState': self.game.get_public_state(),
+                        'phaseState': phase_state
+                    }
+                })
+
     def on_plan_message(self, body):
         players = self.game.get_player_id_map()
         raw = self.game.filter_raw_plan_view(
-            self.game.get_raw_plan_view(), self.me_id)[body['i']]
+            self.game.get_current_raw_plan_view(), self.me_id)[body['i']]
 
-        old_plans = {player_id: self.game.get_plan_view(player_id)
-                     for player_id in self.connections}
+        old_phase_states = {player_id: self.game.get_phase_state(player_id)
+                            for player_id in self.connections}
 
         if body['targets'] is None:
             targets = None
         else:
             # We have to first unplan the action before planning it.
-            self.game.edit_plan(raw['actionGroup'], raw['action'],
-                                self.me_id, None)
+            self.game.edit_plan(raw['actionGroup'], raw['action'], self.me_id,
+                                None)
             targets = [players[player_name]
                        for player_name in body['targets']]
 
@@ -76,9 +109,9 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
 
         # Notify other users about our plan edit.
         for player_id, connections in self.connections.items():
-            new_plan = self.game.get_plan_view(player_id)
+            phase_state = self.game.get_phase_state(player_id)
 
-            if new_plan == old_plans[player_id]:
+            if phase_state == old_phase_states[player_id]:
                 # Only send updated plans to users.
                 continue
 
@@ -86,7 +119,7 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                 connection.write_message({
                     'type': 'root',
                     'body': {
-                        'phaseState': self.game.get_phase_state(player_id)
+                        'phaseState': phase_state
                     }
                 })
 
@@ -122,6 +155,8 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                 self.on_plan_message(body)
             elif payload['type'] == 'vote':
                 self.on_vote_message(body)
+            elif payload['type'] == 'impulse':
+                self.on_impulse_message(body)
             else:
                 ok = False
         except Exception:
@@ -162,7 +197,7 @@ class Updater(object):
         logger.info("Running scheduled update.")
 
         turn = self.game.state['turn']
-        phase = self.game.meta['phase']
+        phase = self.game.state['phase']
 
         self.game.finish_phase()
 
@@ -174,8 +209,8 @@ class Updater(object):
                         'publicState': self.game.get_public_state(),
                         'phaseState': self.game.get_phase_state(player_id),
                         'phase': phase,
-                        'result': self.game.get_day_result(turn)
-                                  if phase == game.Game.DAY else
+                        'result': self.game.get_day_result_view(turn, player_id)
+                                  if phase == 'Day' else
                                   self.game.get_night_result_view(turn,
                                                                   player_id)
                     }

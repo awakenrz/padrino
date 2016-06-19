@@ -87,49 +87,63 @@ def make_simple(b):
                 type=b.tycon('Recruited', recruitedFaction=Factions.MAFIA)),
             b.make_effect(
                 type=b.tycon('Granted', grantedAction=Actions.KILL,
-                             grantedGroup=MAFIA_ACTION_GROUP))]
+                             grantedGroup=MAFIA_ACTION_GROUP),
+                phasesActive={'Night'})]
 
         GODFATHER = lambda: [b.make_effect(
             type=b.tycon('Framed', framedFaction=Factions.TOWN))]
         STRONGMAN = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.STRONGMAN_KILL,
-                         grantedGroup=MAFIA_ACTION_GROUP))]
+                         grantedGroup=MAFIA_ACTION_GROUP),
+            phasesActive={'Night'})]
         FRUIT_VENDOR = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.FRUIT_VEND,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         DOCTOR = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.PROTECT,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         VIGILANTE = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.KILL,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         COP = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.INVESTIGATE,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         ROLEBLOCKER = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.ROLEBLOCK,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         BUS_DRIVER = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.DRIVE,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         REDIRECTOR = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.REDIRECT,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         DEFLECTOR = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.DEFLECT,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         WATCHER = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.WATCH,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         TRACKER = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.TRACK,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         FOLLOWER = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.FOLLOW,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
         VOYEUR = lambda: [b.make_effect(
             type=b.tycon('Granted', grantedAction=Actions.VOYEUR,
-                         grantedGroup=b.make_action_group()))]
+                         grantedGroup=b.make_action_group()),
+            phasesActive={'Night'})]
 
     Simple.Actions = Actions
     Simple.Factions = Factions
