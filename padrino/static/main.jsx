@@ -35,12 +35,12 @@ function parseCommand(command) {
 
 function interpretInfo(info) {
     switch (info.type) {
-        case 'Investigation':
+        case 'Guilt':
             return {
-                name: 'Investigation',
-                description: info.result
-                    ? 'positive (interpret as guilty)'
-                    : 'negative (interpret as not guilty)'
+                name: 'Guilt',
+                description: info.isGuilty
+                    ? 'guilty'
+                    : 'not guilty'
             };
         case 'Players':
             return {

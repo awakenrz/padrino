@@ -246,8 +246,8 @@ class Game(object):
             'type': type
         }
 
-        if type == 'Investigation':
-            out['result'] = body['result']
+        if type == 'Guilt':
+            out['isGuilty'] = body['isGuilty']
         elif type == 'Fruit':
             pass
         elif type == 'Players':
