@@ -93,13 +93,14 @@ class Builder(object):
         self.state['factions'][ref.token] = ref.traits
         return ref
 
-    def declare_player(self, name, role, effects=None):
+    def declare_player(self, name, role, abilities, effects=None):
         if effects is None:
             effects = []
 
         ref = Ref(len(self.meta['players']), {
             'name': name,
-            'role': role
+            'role': role,
+            'abilities': abilities
         }, effects)
         self.meta['players'][ref.token] = ref.meta
         self.state['players'][ref.token] = ref.traits

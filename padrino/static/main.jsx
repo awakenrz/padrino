@@ -151,7 +151,7 @@ class Action extends React.Component {
 
                     {editMode
                         ? <p className="form-group">
-                            <button type="submit" className={"btn btn-" + this.props.buttonClass}>{this.props.saveCaption}</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button>
+                            <button type="submit" className={"btn btn-" + this.props.buttonClass}>{this.props.buttonCaption}</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button>
                         </p>
                         : null}
                 </fieldset>
@@ -268,7 +268,7 @@ class Vote extends React.Component {
 
                     {this.state.editing
                         ? <p className="form-group">
-                            <button type="submit" className="btn btn-danger">Vote</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button>
+                            <button type="submit" className="btn btn-primary">Vote</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button>
                         </p>
                         : null}
                 </fieldset>
@@ -277,17 +277,13 @@ class Vote extends React.Component {
     }
 }
 
-class Meeting extends Phase {
-    onActionSave(i, targets) {
-        return this.props.client.request('impulse', {i: i, targets: targets});
-    }
 
+class Plan extends React.Component {
     render() {
-        let timeLeft = this.props.end - this.state.now;
         let infoFor = {};
         let extra = [];
 
-        this.props.executed.messages.forEach(message => {
+        this.props.messages.forEach(message => {
             if (message.i === null) {
                 extra.push(message.info);
             } else {
@@ -295,6 +291,40 @@ class Meeting extends Phase {
             }
         });
 
+        return <div>
+            <ul>
+                {this.props.plan.map((e, i) => {
+                    let interpreted = Object.prototype.hasOwnProperty.call(infoFor, i)
+                        ? interpretInfo(infoFor[i])
+                        : null;
+                    return <Action key={i}
+                                   action={e}
+                                   onSave={this.props.canEditAction(i) ? this.props.onActionSave.bind(this, i) : null}
+                                   annotation={interpreted !== null ? 'Result: ' + interpreted.description : null}
+                                   buttonCaption={this.props.saveButtonCaption}
+                                   buttonClass={this.props.saveButtonClass} />;
+                })}
+            </ul>
+
+            {extra.length > 0
+                ? <div>
+                    <p>You also received:</p>
+                    <ul>{extra.map((e, i) => {
+                        let interpreted = interpretInfo(e);
+                        return <li key={i}>{interpreted.name}: {interpreted.description}</li>;
+                    })}</ul>
+                </div>
+                : null}
+        </div>;
+    }
+}
+
+class Day extends Phase {
+    onActionSave(i, targets) {
+        return this.props.client.request('impulse', {i: i, targets: targets});
+    }
+
+    render() {
         return <div>
             {this.heading("Day", this.props.hammer ? " or strict majority reached" : "")}
             {this.props.executed.deaths.length > 0
@@ -314,28 +344,13 @@ class Meeting extends Phase {
 
             {this.props.plan.length > 0
                 ? <div>
-                    <p>Additionally, the following instantaneous actions are available:</p>
-                    <ul>
-                        {this.props.plan.map((e, i) => {
-                            let interpreted = Object.prototype.hasOwnProperty.call(infoFor, i)
-                                ? interpretInfo(infoFor[i])
-                                : null;
-                            return <Action key={i} action={e} annotation={interpreted !== null
-                                ? 'Result: ' + interpreted.description
-                                : null} onSave={e.targets === null ? this.onActionSave.bind(this, i) : null}
-                                saveCaption='Run' buttonClass='danger' />;
-                        })}
-                    </ul>
-                </div>
-                : null}
-
-            {extra.length > 0
-                ? <div>
-                    <p>You just received:</p>
-                    <ul>{extra.map((e, i) => {
-                        let interpreted = interpretInfo(e);
-                        return <li key={i}>{interpreted.name}: {interpreted.description}</li>;
-                    })}</ul>
+                    <p>Additionally, the following <strong>instantaneous</strong> actions are available:</p>
+                    <Plan plan={this.props.plan}
+                          onActionSave={this.onActionSave.bind(this)}
+                          canEditAction={(i) => this.props.plan[i].targets === null}
+                          messages={[]}
+                          saveButtonClass='danger'
+                          saveButtonCaption='Perform' />
                 </div>
                 : null}
         </div>;
@@ -344,62 +359,36 @@ class Meeting extends Phase {
 
 class DayResult extends React.Component {
     render() {
-        let infoFor = {};
-        let extra = [];
-
-        this.props.result.executed.messages.forEach(message => {
-            if (message.i === null) {
-                extra.push(message.info);
-            } else {
-                infoFor[message.i] = message.info;
-            }
-        });
-
         return <div>
             <h3>Day {this.props.turn} <small>ended</small></h3>
-            {this.props.result.executed.deaths.length > 0
-                ? <p>{this.props.result.executed.deaths.map(player => player.name + ' the ' + player.role + ' died.').join(' ')}</p>
+            {this.props.deaths.length > 0
+                ? <p>{this.props.deaths.map(player => player.name + ' the ' + player.role + ' died.').join(' ')}</p>
                 : null}
-            {this.props.result.lynched !== null
-                ? <p>{this.props.result.lynched.name} the {this.props.result.lynched.role} was lynched.</p>
+            {this.props.lynched !== null
+                ? <p>{this.props.lynched.name} the {this.props.lynched.role} was lynched.</p>
                 : <p>Nobody was lynched.</p>}
             <ul>
-                {Object.keys(this.props.result.votes).sort().map((e) => {
-                    let target = this.props.result.votes[e];
+                {Object.keys(this.props.votes).sort().map((e) => {
+                    let target = this.props.votes[e];
                     return <li key={e}>{e} voted for {target === null ? <em>no one</em> : target}</li>;
                 })}
             </ul>
 
-            {this.props.result.plan.length > 0
+            {this.props.plan.length > 0
                 ? <div>
-                    <p>Additionally, the following instantaneous actions were available:</p>
-                    <ul>
-                        {this.props.result.plan.map((e, i) => {
-                            let interpreted = Object.prototype.hasOwnProperty.call(infoFor, i)
-                                ? interpretInfo(infoFor[i])
-                                : null;
-                            return <Action key={i} action={e} annotation={interpreted !== null
-                                ? 'Result: ' + interpreted.description
-                                : null} onSave={null} saveCaption='Run' buttonClass='danger' />;
-                        })}
-                    </ul>
-                </div>
-                : null}
+                    <p>Additionally, the following <strong>instantaneous</strong> actions were available:</p>
 
-            {extra.length > 0
-                ? <div>
-                    <p>You also received:</p>
-                    <ul>{extra.map((e, i) => {
-                        let interpreted = interpretInfo(e);
-                        return <li key={i}>{interpreted.name}: {interpreted.description}</li>;
-                    })}</ul>
+                    <Plan plan={this.props.plan}
+                          canEditAction={(i) => false}
+                          onActionSave={null}
+                          messages={this.props.messages} />
                 </div>
                 : null}
         </div>;
     }
 }
 
-class Plan extends Phase {
+class Night extends Phase {
     onActionSave(i, targets) {
         return this.props.client.request('plan', {i: i, targets: targets});
     }
@@ -407,51 +396,28 @@ class Plan extends Phase {
     render() {
         return <div>
             {this.heading("Night")}
-            <ul>
-                {this.props.plan.map((e, i) => <Action key={i} action={e} onSave={this.onActionSave.bind(this, i)} saveCaption='Save' buttonClass='primary' />)}
-            </ul>
+            <Plan plan={this.props.plan}
+                  canEditAction={(i) => true}
+                  onActionSave={this.onActionSave.bind(this)}
+                  messages={[]}
+                  saveButtonClass='primary'
+                  saveButtonCaption='Plan' />
         </div>;
     }
 }
 
 class NightResult extends React.Component {
     render() {
-        let infoFor = {};
-        let extra = [];
-
-        this.props.result.executed.messages.forEach(message => {
-            if (message.i === null) {
-                extra.push(message.info);
-            } else {
-                infoFor[message.i] = message.info;
-            }
-        });
-
         return <div>
             <h3>Night {this.props.turn} <small>ended</small></h3>
-            {this.props.result.executed.deaths.length > 0
-                ? <p>{this.props.result.executed.deaths.map(player => player.name + ' the ' + player.role + ' was found dead.').join(' ')}</p>
+            {this.props.deaths.length > 0
+                ? <p>{this.props.deaths.map(player => player.name + ' the ' + player.role + ' was found dead.').join(' ')}</p>
                 : <p>Nobody died.</p>}
-            <ul>
-                {this.props.result.plan.map((e, i) => {
-                    let interpreted = Object.prototype.hasOwnProperty.call(infoFor, i)
-                        ? interpretInfo(infoFor[i])
-                        : null;
-                    return <Action key={'p' + i} action={e} annotation={interpreted !== null
-                        ? 'Result: ' + interpreted.description
-                        : null} onSave={null} buttonClass='primary' />;
-                })}
-            </ul>
 
-            {extra.length > 0
-                ? <div>
-                    <p>You also received:</p>
-                    <ul>{extra.map((e, i) => {
-                        let interpreted = interpretInfo(e);
-                        return <li key={i}>{interpreted.name}: {interpreted.description}</li>;
-                    })}</ul>
-                </div>
-                : null}
+            <Plan plan={this.props.plan}
+                  canEditAction={(i) => false}
+                  onActionSave={null}
+                  messages={this.props.messages} />
         </div>;
     }
 }
@@ -463,6 +429,9 @@ class Profile extends React.Component {
             <dl>
                 <dt>Role</dt>
                 <dd>{this.props.role}</dd>
+
+                <dt>Abilities</dt>
+                <dd>{this.props.abilities}</dd>
 
                 <dt>Faction</dt>
                 <dd>{this.props.faction}</dd>
@@ -512,6 +481,27 @@ class GameOver extends React.Component {
             <ul>
                 {this.props.winners.sort().map(e => <li key={e}>{e}</li>)}
             </ul>
+            <h4>Roles</h4>
+            <ul>
+                {Object.keys(this.props.roles).sort().map(player =>
+                    <li key={player}>{player}: {this.props.roles[player]}</li>)}
+            </ul>
+            <h4>Game log</h4>
+            {this.props.log.map((e, i) => <div key={i}>
+                <h5>{e.phase} {e.turn}</h5>
+                <ul>{e.acts.length > 0 ? e.acts.map((e, i) => {
+                    return <li key={i}>{e.source}: {parseCommand(e.command).parts.map((part, i) => {
+                        switch (part.type) {
+                            case "text":
+                                return <span key={i}>{part.text}</span>;
+
+                            case "group":
+                                return <span key={i}>{e.targets[part.group]}</span>;
+                        }
+                    })}</li>;
+                }) : <li><em>No actions for this phase.</em></li>}
+                </ul>
+            </div>)}
         </div>;
     }
 }
@@ -665,15 +655,23 @@ class Root extends React.Component {
             var last = i == this.state.publicState.turn;
 
             if (i <= this.state.dayResults.length) {
+                let result = this.state.dayResults[i - 1];
                 results.push(<DayResult turn={i}
                                         key={'d' + i}
-                                        result={this.state.dayResults[i - 1]} />);
+                                        plan={result.plan}
+                                        deaths={result.executed.deaths}
+                                        messages={result.messages}
+                                        lynched={result.lynched}
+                                        votes={result.votes} />);
             }
 
             if (i <= this.state.nightResults.length) {
+                let result = this.state.nightResults[i - 1];
                 results.push(<NightResult turn={i}
                                           key={'n' + i}
-                                          result={this.state.nightResults[i - 1]} />);
+                                          plan={result.plan}
+                                          deaths={result.executed.deaths}
+                                          messages={result.messages} />);
             }
         }
 
@@ -689,20 +687,23 @@ class Root extends React.Component {
             <div className="row">
                 <div className="col-md-10 col-md-push-2">
                     {this.state.phaseState.phase == 'Night' ?
-                        <Plan client={this.client}
-                              turn={this.state.publicState.turn}
-                              end={this.state.publicState.phaseEnd}
-                              plan={this.state.phaseState.plan} /> :
+                        <Night client={this.client}
+                               turn={this.state.publicState.turn}
+                               end={this.state.publicState.phaseEnd}
+                               plan={this.state.phaseState.plan} /> :
                      this.state.phaseState.phase == 'Day' ?
-                        <Meeting client={this.client}
-                                me={this.state.playerInfo.name}
-                                turn={this.state.publicState.turn}
-                                end={this.state.publicState.phaseEnd}
-                                ballot={this.state.phaseState.ballot}
-                                plan={this.state.phaseState.plan}
-                                executed={this.state.phaseState.executed}
-                                hammer={this.state.publicInfo.rules.indexOf('hammer') !== -1} /> :
+                        <Day client={this.client}
+                             turn={this.state.publicState.turn}
+                             end={this.state.publicState.phaseEnd}
+                             plan={this.state.phaseState.plan}
+                             me={this.state.playerInfo.name}
+                             ballot={this.state.phaseState.ballot}
+                             executed={this.state.phaseState.executed}
+                             messages={this.state.phaseState.messages}
+                             hammer={this.state.publicInfo.rules.indexOf('hammer') !== -1} /> :
                         <GameOver winners={this.state.phaseState.winners}
+                                  log={this.state.phaseState.log}
+                                  roles={this.state.phaseState.roles}
                                   me={this.state.playerInfo.name} />}
                     {results}
                     <Start motd={this.state.publicInfo.motd}
@@ -712,6 +713,7 @@ class Root extends React.Component {
                 <div className="col-md-2 col-md-pull-10">
                     <Profile name={this.state.playerInfo.name}
                              role={this.state.playerInfo.role}
+                             abilities={this.state.playerInfo.abilities}
                              faction={this.state.playerInfo.faction}
                              agenda={this.state.playerInfo.agenda}
                              friends={this.state.playerInfo.friends}

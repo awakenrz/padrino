@@ -18,8 +18,8 @@ class Game(object):
 
         self.state_path = os.path.join(self.root, 'state.yml')
         self.meta_path = os.path.join(self.root, 'meta.yml')
-        self.executed_path = os.path.join(self.root, 'executed.yml')
 
+        self.executed_path = os.path.join(self.root, 'executed.yml')
         self.day_result_path = os.path.join(self.root, 'day_result.yml')
 
         self.plan_path = os.path.join(self.root, 'plan.yml')
@@ -58,7 +58,13 @@ class Game(object):
                 'phase': 'Over',
                 'winners': [self.meta['players'][player_id]['name']
                             for player_id, player in self.players.items()
-                            if fates[player['faction']]]
+                            if fates[player['faction']]],
+                'roles': {
+                    self.meta['players'][player_id]['name']:
+                    self.meta['players'][player_id]['role']
+                    for player_id, player in self.players.items()
+                },
+                'log': self.get_game_log()
             }
 
         if self.state['phase'] == 'Night':
@@ -68,12 +74,55 @@ class Game(object):
             }
 
         if self.state['phase'] == 'Day':
+            raw_plan = self.filter_raw_plan_view(
+                player_id, self.get_current_raw_plan_view())
+
             return {
                 'phase': 'Day',
                 'ballot': self.get_ballot(),
-                'plan': self.get_current_plan_view(player_id),
-                'executed': self.get_current_executed_view(player_id)
+                'executed': self.get_current_executed_view(),
+                'messages': self.get_current_messages_view(player_id, raw_plan),
+                'plan': self.interpret_raw_plan_view(raw_plan),
             }
+
+    def get_game_log(self):
+        log = []
+
+        history = {
+            turn: {
+                phase: [self.interpret_log_act(act) for act in acts]
+                for phase, acts in phases.items()
+            } for turn, phases in glue.run('view-history',
+                                           self.state_path).items()
+        }
+
+        for turn in range(1, self.state['turn']):
+            turn_history = history.get(turn, {})
+            log.append({
+                'turn': turn,
+                'phase': 'Night',
+                'acts': turn_history.get('Night', [])
+            })
+            log.append({
+                'turn': turn,
+                'phase': 'Day',
+                'acts': turn_history.get('Day', [])
+            })
+        if self.state['phase'] == 'Day':
+            log.append({
+                'turn': self.state['turn'],
+                'phase': 'Night',
+                'acts': history.get(self.state['turn'], {}).get('Night', [])
+            })
+        return log
+
+    def interpret_log_act(self, act):
+        return {
+            'source': self.meta['players'][act['source']]['name'],
+            'targets': [self.meta['players'][target]['name']
+                        for target in act['targets']],
+            'command': self.meta['actions'][act['action']]['command']
+        }
 
     def get_night_result_views(self, player_id):
         results = []
@@ -90,53 +139,66 @@ class Game(object):
             results.append(self.get_day_result_view(turn, player_id))
         return results
 
-    def view_raw_executed(self, player_id, raw_plan, executed):
-        messages = []
+    def interpret_messages(self, raw_plan, messages):
+        out = []
 
-        for message in executed['messages']:
-            if message['recipient'] != player_id:
-                continue
-
+        for message in messages:
             for i, info in enumerate(raw_plan):
                 if info['act'] is not None and \
                    message['actTrace'] == info['act']['trace']:
                     break
             else:
                 i = None
-            messages.append({
+            out.append({
                 'i': i,
                 'info': self.interpret_message_info(message['info'])
             })
 
+        return out
+
+    def filter_messages(self, player_id, messages):
+        return [message for message in messages
+                if message['recipient'] == player_id]
+
+    def get_current_messages_view(self, player_id, raw_plan):
+        return self.interpret_messages(raw_plan, self.filter_messages(
+            player_id,
+            glue.run('view-messages', self.state_path, self.executed_path)))
+
+    def get_messages_view(self, turn, phase, player_id, raw_plan):
+        state_path = self.state_path + '.' + phase + '.' + str(turn)
+        executed_path = self.executed_path + '.' + phase + '.' + str(turn)
+
+        return self.interpret_messages(raw_plan, self.filter_messages(
+            player_id,
+            glue.run('view-messages', state_path, executed_path)))
+
+    def interpret_raw_executed(self, executed):
         return {
             'deaths': [self.meta['players'][player]
-                       for player in executed['deaths']],
-            'messages': messages
+                       for player in executed['deaths']]
         }
 
-    def get_current_executed_view(self, player_id):
+    def get_current_executed_view(self):
         with open(self.executed_path, 'r') as f:
             executed = yaml.load(f)
 
-        return self.view_raw_executed(
-            player_id,
-            self.filter_raw_plan_view(self.get_current_raw_plan_view(),
-                                      player_id),
-            executed)
+        return self.interpret_raw_executed(executed)
 
-    def get_executed_view(self, turn, phase, player_id, raw_plan):
+    def get_executed_view(self, turn, phase):
         with open(self.executed_path + '.' + phase + '.' + str(turn),
                   'r') as f:
             executed = yaml.load(f)
 
-        return self.view_raw_executed(player_id, raw_plan, executed)
+        return self.interpret_raw_executed(executed)
 
     def get_night_result_view(self, turn, player_id):
-        raw = self.filter_raw_plan_view(self.get_raw_plan_view(turn, 'night'),
-                                        player_id)
+        raw = self.filter_raw_plan_view(player_id,
+                                        self.get_raw_plan_view(turn, 'night'))
 
         return {
-            'executed': self.get_executed_view(turn, 'night', player_id, raw),
+            'executed': self.get_executed_view(turn, 'night'),
+            'messages': self.get_messages_view(turn, 'night', player_id, raw),
             'plan': self.interpret_raw_plan_view(raw)
         }
 
@@ -144,8 +206,8 @@ class Game(object):
         with open(self.day_result_path + '.day.' + str(turn), 'r') as f:
             result = yaml.load(f)
 
-        raw = self.filter_raw_plan_view(self.get_raw_plan_view(turn, 'day'),
-                                        player_id)
+        raw = self.filter_raw_plan_view(player_id,
+                                        self.get_raw_plan_view(turn, 'day'))
 
         votes = result['votes']
 
@@ -158,7 +220,8 @@ class Game(object):
             },
             'lynched': self.meta['players'][result['lynched']]
                        if result['lynched'] is not None else None,
-            'executed': self.get_executed_view(turn, 'day', player_id, raw),
+            'executed': self.get_executed_view(turn, 'day'),
+            'messages': self.get_messages_view(turn, 'day', player_id, raw),
             'plan': self.interpret_raw_plan_view(raw)
         }
 
@@ -174,7 +237,7 @@ class Game(object):
                         self.state_path + '.' + phase + '.' + str(turn),
                         self.plan_path + '.' + phase + '.' + str(turn))
 
-    def filter_raw_plan_view(self, raw, player_id):
+    def filter_raw_plan_view(self, player_id, raw):
         return [info for info in raw if info['source'] == player_id]
 
     def interpret_message_info(self, info):
@@ -214,8 +277,8 @@ class Game(object):
 
     def get_current_plan_view(self, player_id):
         return self.interpret_raw_plan_view(
-            self.filter_raw_plan_view(self.get_current_raw_plan_view(),
-                                      player_id))
+            self.filter_raw_plan_view(player_id,
+                                      self.get_current_raw_plan_view()))
 
     def get_raw_ballot(self):
         with open(self.ballot_path, 'r') as f:
@@ -252,6 +315,7 @@ class Game(object):
         return {
             'name': player_meta['name'],
             'role': player_meta['role'],
+            'abilities': player_meta['abilities'],
             'faction': faction_meta['name'],
             'agenda': faction_meta['agenda'],
             'friends': [self.meta['players'][friend]['name']
@@ -336,7 +400,7 @@ class Game(object):
         if self.state['phase'] != 'Night':
             raise ValueError('not night time')
 
-        return glue.run('plan', self.state_path, self.plan_path, input={
+        glue.run('plan', self.state_path, self.plan_path, input={
             'actionGroup': action_group,
             'action': action,
             'source': source,
@@ -347,8 +411,8 @@ class Game(object):
         if self.state['phase'] != 'Day':
             raise ValueError('not day time')
 
-        r = glue.run('impulse', self.state_path, self.plan_path,
-                        self.executed_path, input={
+        glue.run('impulse', self.state_path, self.plan_path,
+                 self.executed_path, input={
             'actionGroup': action_group,
             'action': action,
             'source': source,
@@ -356,7 +420,6 @@ class Game(object):
         })
         self.load_state()
         self.load_players()
-        return r
 
     def vote(self, source, target):
         if self.state['phase'] != 'Day':

@@ -60,7 +60,7 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
 
         players = self.game.get_player_id_map()
         raw = self.game.filter_raw_plan_view(
-            self.game.get_current_raw_plan_view(), self.me_id)[body['i']]
+            self.me_id, self.game.get_current_raw_plan_view())[body['i']]
 
         targets = [players[player_name] for player_name in body['targets']]
 
@@ -69,6 +69,9 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
 
         self.game.apply_impulse(raw['actionGroup'], raw['action'], self.me_id,
                                 targets)
+
+        if self.game.is_game_over():
+            self.updater.run()
 
         # Notify other users about our plan edit.
         for player_id, connections in self.connections.items():
@@ -90,7 +93,7 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
     def on_plan_message(self, body):
         players = self.game.get_player_id_map()
         raw = self.game.filter_raw_plan_view(
-            self.game.get_current_raw_plan_view(), self.me_id)[body['i']]
+            self.me_id, self.game.get_current_raw_plan_view())[body['i']]
 
         old_phase_states = {player_id: self.game.get_phase_state(player_id)
                             for player_id in self.connections}
