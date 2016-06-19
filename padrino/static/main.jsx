@@ -362,7 +362,7 @@ class DayResult extends React.Component {
                 : null}
             {this.props.result.lynched !== null
                 ? <p>{this.props.result.lynched.name} the {this.props.result.lynched.role} was lynched.</p>
-                : null}
+                : <p>Nobody was lynched.</p>}
             <ul>
                 {Object.keys(this.props.result.votes).sort().map((e) => {
                     let target = this.props.result.votes[e];
@@ -431,7 +431,7 @@ class NightResult extends React.Component {
             <h3>Night {this.props.turn} <small>ended</small></h3>
             {this.props.result.executed.deaths.length > 0
                 ? <p>{this.props.result.executed.deaths.map(player => player.name + ' the ' + player.role + ' was found dead.').join(' ')}</p>
-                : null}
+                : <p>Nobody died.</p>}
             <ul>
                 {this.props.result.plan.map((e, i) => {
                     let interpreted = Object.prototype.hasOwnProperty.call(infoFor, i)
