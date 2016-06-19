@@ -159,7 +159,7 @@ class Action extends React.Component {
                             : this.props.action.compulsion === 'Required'
                                 ? <em>(compelled)</em>
                                 : null}
-                        {this.props.annotation ? <div><em>{this.props.annotation}</em></div> : null}
+                        {this.props.annotation ? <span> ⇒ <strong>{this.props.annotation}</strong></span> : null}
 
                         {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onSave
                             ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
@@ -321,7 +321,7 @@ class Plan extends React.Component {
                     return <Action key={i}
                                    action={e}
                                    onSave={this.props.canEditAction(i) ? this.props.onActionSave.bind(this, i) : null}
-                                   annotation={interpreted !== null ? 'Result: ' + interpreted.description : null}
+                                   annotation={interpreted !== null ? interpreted.description : null}
                                    buttonCaption={this.props.saveButtonCaption}
                                    buttonClass={this.props.saveButtonClass} />;
                 })}
