@@ -45,12 +45,12 @@ function interpretInfo(info) {
         case 'Players':
             return {
                 name: 'Players',
-                description: info.players.join(', ')
+                description: info.players.join(', ') || 'no players'
             };
         case 'Actions':
             return {
                 name: 'Actions',
-                description: info.actions.map(command => command.replace(/\$\d+/g, 'someone')).join(', ')
+                description: info.actions.map(command => command.replace(/\$\d+/g, 'someone')).join(', ') || 'no actions'
             };
         case 'Fruit':
             return {
@@ -348,7 +348,7 @@ class Day extends Phase {
                     <Plan plan={this.props.plan}
                           onActionSave={this.onActionSave.bind(this)}
                           canEditAction={(i) => this.props.plan[i].targets === null}
-                          messages={[]}
+                          messages={this.props.messages}
                           saveButtonClass='danger'
                           saveButtonCaption='Perform' />
                 </div>

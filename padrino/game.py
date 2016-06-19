@@ -166,7 +166,7 @@ class Game(object):
             glue.run('view-messages', self.state_path, self.executed_path)))
 
     def get_messages_view(self, turn, phase, player_id, raw_plan):
-        state_path = self.state_path + '.' + phase + '.' + str(turn)
+        state_path = self.state_path + '.' + phase + '.post.' + str(turn)
         executed_path = self.executed_path + '.' + phase + '.' + str(turn)
 
         return self.interpret_messages(raw_plan, self.filter_messages(
@@ -418,6 +418,7 @@ class Game(object):
             'source': source,
             'targets': targets
         })
+
         self.load_state()
         self.load_players()
 
@@ -457,6 +458,9 @@ class Game(object):
 
         os.unlink(self.ballot_path)
 
+        shutil.copy(self.state_path, self.state_path + '.day.post.' +
+                    str(self.state['turn']))
+
         self.load_state()
         self.load_players()
 
@@ -473,6 +477,9 @@ class Game(object):
         glue.run('run-night', self.state_path, plan_path, executed_path)
 
         os.unlink(self.plan_path)
+
+        shutil.copy(self.state_path, self.state_path + '.night.post.' +
+                    str(self.state['turn']))
 
         self.load_state()
         self.load_players()
