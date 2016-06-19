@@ -84,14 +84,20 @@ class Action extends React.Component {
     onSubmit(e) {
         e.preventDefault();
 
-        let targets = [];
-        for (let i = 0; i < this.state.command.groups; ++i) {
-            let v = e.target.elements['target' + i].value;
-            if (v === "") {
-                targets = null;
-                break;
+        let targets;
+
+        if (this.state.command.groups === 0) {
+            targets = e.target.elements.on.checked ? [] : null;
+        } else {
+            targets = [];
+            for (let i = 0; i < this.state.command.groups; ++i) {
+                let v = e.target.elements['target' + i].value;
+                if (v === "") {
+                    targets = null;
+                    break;
+                }
+                targets.push(v);
             }
-            targets.push(v);
         }
 
         this.setState({waiting: true});
@@ -112,28 +118,43 @@ class Action extends React.Component {
     render() {
         let editMode = this.state.editing && this.props.action.available;
 
+        // ugh 0-target actions
+        let editor;
+
+        if (this.state.command.groups > 0) {
+            editor = this.state.command.parts.map((part, i) => {
+                switch (part.type) {
+                    case "text":
+                        return <span key={i}>{part.text}</span>;
+
+                    case "group":
+                        let targets = this.props.action.targets;
+                        if (editMode) {
+                            return <select className="form-control" defaultValue={this.props.action.targets === null ? "" : this.props.action.targets[part.group]} key={i} name={'target' + part.group}>
+                                <option value="">no one</option>
+                                {this.props.action.candidates[part.group].map(candidate =>
+                                    <option value={candidate} key={candidate}>{candidate}</option>)}
+                            </select>;
+                        } else {
+                            return targets === null ? <em key={i}>{this.props.action.compulsion !== 'Forced' ? 'no one' : 'someone'}</em> : <strong key={i}>{targets[part.group]}</strong>;
+                        }
+                }
+            });
+        } else {
+            editor = <span>
+                {this.props.action.command} {editMode
+                    ? <input type="checkbox" defaultChecked={this.props.action.targets !== null} name='on' />
+                    : this.props.action.targets !== null
+                        ? <span> <strong>on</strong></span>
+                        : <span> <em>off</em></span>}
+            </span>;
+        }
+
         return <li>
             <form onSubmit={this.onSubmit.bind(this)}>
                 <fieldset style={{textDecoration: !this.props.action.available ? 'line-through' : ''}} disabled={!this.props.action.available || this.state.waiting}>
                     <div className="form-inline">
-                        {this.state.command.parts.map((part, i) => {
-                            switch (part.type) {
-                                case "text":
-                                    return <span key={i}>{part.text}</span>;
-
-                                case "group":
-                                    let targets = this.props.action.targets;
-                                    if (editMode) {
-                                        return <select className="form-control" defaultValue={this.props.action.targets === null ? "" : this.props.action.targets[part.group]} key={i} name={'target' + part.group}>
-                                            <option value="">no one</option>
-                                            {this.props.action.candidates[part.group].map(candidate =>
-                                                <option value={candidate} key={candidate}>{candidate}</option>)}
-                                        </select>;
-                                    } else {
-                                        return targets === null ? <em key={i}>{this.props.action.compulsion !== 'Forced' ? 'no one' : 'someone'}</em> : <span key={i}>{targets[part.group]}</span>;
-                                    }
-                            }
-                        })} {this.props.action.compulsion === 'Forced'
+                        {editor} {this.props.action.compulsion === 'Forced'
                             ? <em>(forced)</em>
                             : this.props.action.compulsion === 'Required'
                                 ? <em>(compelled)</em>
@@ -250,13 +271,13 @@ class Vote extends React.Component {
             <form class="form-horizontal" onSubmit={this.onSubmit.bind(this)}>
                 <fieldset disabled={this.state.waiting}>
                     <div className="form-inline">
-                        {this.props.source} is voting for {this.state.editing
+                        <strong>{this.props.source}</strong> is voting for {this.state.editing
                             ? <select className="form-control" defaultValue={this.props.target === null ? "" : this.props.target} name="target">
                                 <option value="">no one</option>
                                 {this.props.candidates.sort().map(candidate =>
                                     <option value={candidate} key={candidate}>{candidate}</option>)}
                             </select>
-                            : this.props.target === null ? <em>no one</em> : this.props.target}
+                            : this.props.target === null ? <em>no one</em> : <strong>{this.props.target}</strong>}
                         {!this.state.editing && isMe
                             ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                             : null}
@@ -370,7 +391,7 @@ class DayResult extends React.Component {
             <ul>
                 {Object.keys(this.props.votes).sort().map((e) => {
                     let target = this.props.votes[e];
-                    return <li key={e}>{e} voted for {target === null ? <em>no one</em> : target}</li>;
+                    return <li key={e}><strong>{e}</strong> voted for {target === null ? <em>no one</em> : <strong>{target}</strong>}</li>;
                 })}
             </ul>
 
@@ -484,19 +505,19 @@ class GameOver extends React.Component {
             <h4>Roles</h4>
             <ul>
                 {Object.keys(this.props.roles).sort().map(player =>
-                    <li key={player}>{player}: {this.props.roles[player]}</li>)}
+                    <li key={player}><strong>{player}</strong>: {this.props.roles[player]}</li>)}
             </ul>
             <h4>Game log</h4>
             {this.props.log.map((e, i) => <div key={i}>
                 <h5>{e.phase} {e.turn}</h5>
                 <ul>{e.acts.length > 0 ? e.acts.map((e, i) => {
-                    return <li key={i}>{e.source}: {parseCommand(e.command).parts.map((part, i) => {
+                    return <li key={i}><strong>{e.source}</strong>: {parseCommand(e.command).parts.map((part, i) => {
                         switch (part.type) {
                             case "text":
                                 return <span key={i}>{part.text}</span>;
 
                             case "group":
-                                return <span key={i}>{e.targets[part.group]}</span>;
+                                return <span key={i}><strong>{e.targets[part.group]}</strong></span>;
                         }
                     })}</li>;
                 }) : <li><em>No actions for this phase.</em></li>}
