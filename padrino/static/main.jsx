@@ -132,7 +132,7 @@ class Action extends React.Component {
                         if (editMode) {
                             return <select className="form-control" defaultValue={this.props.action.targets === null ? "" : this.props.action.targets[part.group]} key={i} name={'target' + part.group}>
                                 <option value="">no one</option>
-                                {this.props.action.candidates[part.group].map(candidate =>
+                                {this.props.action.candidates[part.group].sort().map(candidate =>
                                     <option value={candidate} key={candidate}>{candidate}</option>)}
                             </select>;
                         } else {
