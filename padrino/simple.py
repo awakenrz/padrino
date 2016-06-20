@@ -25,6 +25,11 @@ def make_simple(b):
             'Kills a player, ignoring protection.',
             type=b.tycon('StrongmanKill'))
 
+        DESPERADO_KILL = b.declare_action(
+            'desperado kill $0',
+            'Kills a player if they are scum, otherwise kills you.',
+            type=b.tycon('DesperadoKill', killableFactions={Factions.MAFIA}))
+
         PROTECT = b.declare_action(
             'protect $0',
             'Protects another player.',
@@ -82,6 +87,11 @@ def make_simple(b):
             'Stop a lynching from occurring.',
             type=b.tycon('Veto'))
 
+        SUICIDE = b.declare_action(
+            'commit suicide',
+            'Commit suicide.',
+            type=b.tycon('Suicide'))
+
     Actions.KILL = KILL
 
     class Simple:
@@ -98,6 +108,9 @@ def make_simple(b):
                                        framedFaction=Factions.TOWN))]
         STRONGMAN = lambda: [
             b.make_grant(Actions.STRONGMAN_KILL, MAFIA_ACTION_GROUP,
+                         phasesActive={'Night'})]
+        DESPERADO = lambda: [
+            b.make_grant(Actions.DESPERADO_KILL, b.make_action_group(),
                          phasesActive={'Night'})]
         FRUIT_VENDOR = lambda: [
             b.make_grant(Actions.FRUIT_VEND, b.make_action_group(),

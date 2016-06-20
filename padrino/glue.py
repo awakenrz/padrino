@@ -1,8 +1,10 @@
 import os
+import shlex
 import subprocess
 import yaml
 
 COSANOSTRA_GLUE_BIN_DIR = os.environ['COSANOSTRA_GLUE_BIN_DIR']
+COSANOSTRA_GLUE_ARGS = shlex.split(os.environ.get('COSANOSTRA_GLUE_ARGS', ''))
 
 class GlueError(Exception):
     pass
@@ -10,8 +12,9 @@ class GlueError(Exception):
 
 def run(prog, *args, input=None):
     proc = subprocess.Popen([
-        os.path.join(os.environ['COSANOSTRA_GLUE_BIN_DIR'], prog)
-    ] + list(args), stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        os.path.join(os.environ['COSANOSTRA_GLUE_BIN_DIR'], prog),
+    ] + COSANOSTRA_GLUE_ARGS + list(args),
+    stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     if input is not None:
         proc.stdin.write(yaml.dump(input).encode('utf-8'))
