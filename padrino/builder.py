@@ -72,8 +72,8 @@ class Builder(object):
     def make_grant(self, action, group, compulsion='Voluntary', *args,
                    **kwargs):
         return self.make_effect(
-            type=self.tycon('Granted', grantedAction=action,
-                             grantedGroup=group, grantedCompulsion=compulsion),
+            type=self.tycon('Granted', grantedAction=action, grantedGroup=group,
+                            grantedCompulsion=compulsion),
             *args, **kwargs)
 
     def declare_action(self, command, description, **kwargs):
