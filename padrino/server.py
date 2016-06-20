@@ -185,6 +185,22 @@ class PokeHandler(tornado.web.RequestHandler):
         self.finish('ok')
 
 
+class RefreshHandler(tornado.web.RequestHandler):
+    def initialize(self, game, connections):
+        self.game = game
+        self.connections = connections
+
+    def get(self):
+        if not self.game.check_poke_token(self.request.query.encode('utf-8')):
+            self.send_error(403)
+            return
+        for player_id, connections in self.connections.items():
+            for connection in connections:
+                connection.write_message({'type': 'refresh'})
+        self.finish('ok')
+
+
+
 class Updater(object):
     def __init__(self, game, connections):
         self.game = game
@@ -252,6 +268,7 @@ def make_app():
     return tornado.web.Application([
         (r'/', MainHandler),
         (r'/_poke', PokeHandler, {'game': g, 'updater': updater}),
+        (r'/_refresh', RefreshHandler, {'game': g, 'connections': connections}),
         (r'/ws', GameSocketHandler, {'game': g, 'connections': connections,
                                      'updater': updater}),
         (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(

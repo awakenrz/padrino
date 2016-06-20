@@ -585,6 +585,10 @@ class Client {
                     this.promises[body].reject();
                     delete this.promises[body];
                     break;
+
+                case 'refresh':
+                    window.location.reload();
+                    break;
             }
         };
 
