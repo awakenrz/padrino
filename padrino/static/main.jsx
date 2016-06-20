@@ -509,7 +509,13 @@ class End extends React.Component {
             </ul>
             <h4>True Action Log</h4>
             <p>
-                These are the actions that occured at night with their actual targets. Note that they may not be the actions originally planned by each player, and some may be missing if they were blocked.
+                These are the actions that occured at night with their actual
+                targets. Note that they may not be the actions originally
+                planned by each player (or even planned at all), not in order of
+                actual execution (bus drives may appear after bus driven
+                actions, for instance), and some may be missing (if they were
+                blocked). However, all actions present are guaranteed to be
+                executed.
             </p>
             {this.props.log.map((e, i) => <div key={i}>
                 <h5>{e.phase} {e.turn}</h5>
