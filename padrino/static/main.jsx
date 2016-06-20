@@ -349,7 +349,9 @@ class Day extends Phase {
         return <div>
             {this.heading("Day", this.props.hammer ? " or strict majority reached" : "")}
             {this.props.deaths.length > 0
-                ? <p>{this.props.deaths.map(player => player.name + ' the ' + player.role + ' died.').join(' ')}</p>
+                ? <p>{this.props.deaths.map(player =>
+                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.role}</strong> was found dead. </span>)}
+                </p>
                 : null}
             <ul>
                 {Object.keys(this.props.ballot.votes).sort().map((e, i) => {
@@ -383,7 +385,9 @@ class DayResult extends React.Component {
         return <div>
             <h3>Day {this.props.turn} <small>ended</small></h3>
             {this.props.deaths.length > 0
-                ? <p>{this.props.deaths.map(player => player.name + ' the ' + player.role + ' died.').join(' ')}</p>
+                ? <p>{this.props.deaths.map(player =>
+                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.role}</strong> died. </span>)}
+                </p>
                 : null}
             {this.props.lynched !== null
                 ? <p>{this.props.lynched.name} the {this.props.lynched.role} was lynched.</p>
@@ -432,7 +436,9 @@ class NightResult extends React.Component {
         return <div>
             <h3>Night {this.props.turn} <small>ended</small></h3>
             {this.props.deaths.length > 0
-                ? <p>{this.props.deaths.map(player => player.name + ' the ' + player.role + ' was found dead.').join(' ')}</p>
+                ? <p>{this.props.deaths.map(player =>
+                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.role}</strong> died. </span>)}
+                </p>
                 : <p>Nobody died.</p>}
 
             <Plan plan={this.props.plan}
