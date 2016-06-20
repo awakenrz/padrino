@@ -162,7 +162,6 @@ class Game(object):
         return [message for message in messages
                 if message['recipient'] == player_id]
 
-
     def get_messages_view(self, turn, phase, player_id, raw_plan):
         state_path = self.state_path + '.' + phase + '.' + str(turn)
         state_post_path = self.state_path + '.' + phase + '.post.' + str(turn)

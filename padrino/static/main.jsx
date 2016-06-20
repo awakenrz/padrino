@@ -507,7 +507,10 @@ class End extends React.Component {
                 {Object.keys(this.props.roles).sort().map(player =>
                     <li key={player}><strong>{player}</strong>: {this.props.roles[player]}</li>)}
             </ul>
-            <h4>Action Log</h4>
+            <h4>True Action Log</h4>
+            <p>
+                These are the actions that occured at night with their actual targets. Note that they may not be the actions originally planned by each player, and some may be missing if they were blocked.
+            </p>
             {this.props.log.map((e, i) => <div key={i}>
                 <h5>{e.phase} {e.turn}</h5>
                 <ul>{e.acts.length > 0 ? e.acts.map((e, i) => {
