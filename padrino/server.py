@@ -206,6 +206,10 @@ class Updater(object):
         self.game = game
         self.connections = connections
         self.schedule_handle = None
+        
+        self.keep_alive_handle = tornado.ioloop.PeriodicCallback(self.keep_alive, 30 * 1000)
+        self.keep_alive_handle.start()
+
         self.ioloop = tornado.ioloop.IOLoop.current()
 
     def run(self):
@@ -248,6 +252,12 @@ class Updater(object):
                     datetime.datetime.fromtimestamp(phase_end))
 
         self.schedule_handle = self.ioloop.call_at(phase_end, self.run)
+
+    def keep_alive(self):
+        logger.info("Pinging all connections.")
+        for connections in self.connections.values():
+            for connection in connections:
+                connection.ping(b'')
 
 
 def make_app():
