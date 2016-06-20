@@ -32,7 +32,7 @@ def make_simple(b):
 
         PROTECT = b.declare_action(
             'protect $0',
-            'Protects another player.',
+            'Protects another player from kills for one phase.',
             type=b.tycon('Protect'))
 
         INVESTIGATE = b.declare_action(
@@ -42,25 +42,31 @@ def make_simple(b):
 
         ROLEBLOCK = b.declare_action(
             'roleblock $0',
-            'Stops a player from performing their action.',
+            'Stops a player from performing their action for one phase.',
             type=b.tycon('Roleblock'))
 
         DRIVE = b.declare_action(
             'drive $0 with $1',
             'Make all actions targeting one player target another, and vice '
-            'versa.',
+            'versa, for one phase.',
             type=b.tycon('Drive'))
 
         REDIRECT = b.declare_action(
             'redirect $0 to $1',
-            'Make all actions that a player performs target a different '
-            'player.',
+            'Make all actions that a player performs target another player for '
+            'one phase.',
             type=b.tycon('Redirect'))
 
         DEFLECT = b.declare_action(
             'deflect $0 to $1',
-            'Make all actions targeting a player target a different player.',
+            'Make all actions targeting a player target another player for one '
+            'phase.',
             type=b.tycon('Deflect'))
+
+        FRAME = b.declare_action(
+            'frame $0',
+            'Frame someone as being part of the Mafia for one phase.',
+            type=b.tycon('Frame', framedFaction=Factions.MAFIA))
 
         WATCH = b.declare_action(
             'watch $0',
@@ -135,6 +141,9 @@ def make_simple(b):
                          phasesActive={'Night'})]
         DEFLECTOR = lambda: [
             b.make_grant(Actions.DEFLECT, b.make_action_group(),
+                         phasesActive={'Night'})]
+        FRAMER = lambda: [
+            b.make_grant(Actions.FRAME, b.make_action_group(),
                          phasesActive={'Night'})]
         WATCHER = lambda: [
             b.make_grant(Actions.WATCH, b.make_action_group(),

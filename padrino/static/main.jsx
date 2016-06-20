@@ -498,10 +498,18 @@ class End extends React.Component {
             <h3>End</h3>
             <p>{this.props.winners.indexOf(this.props.me) !== -1
                 ? 'Congratulations!'
-                : 'Better luck next time!'} The winners are:</p>
-            <ul>
-                {this.props.winners.sort().map(e => <li key={e}>{e}</li>)}
-            </ul>
+                : 'Better luck next time!'}
+            </p>
+
+            {this.props.winners.length > 0
+                ? <div>
+                    <p>The winners are:</p>
+                    <ul>
+                        {this.props.winners.sort().map(e => <li key={e}>{e}</li>)}
+                    </ul>
+                </div>
+                : <p>Everyone lost!</p>}
+
             <h4>Roles</h4>
             <ul>
                 {Object.keys(this.props.roles).sort().map(player =>
