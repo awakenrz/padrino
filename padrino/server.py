@@ -5,6 +5,7 @@ import jwt
 import logging
 import os
 import re
+import time
 import tornado.ioloop
 import tornado.options
 import tornado.web
@@ -270,8 +271,8 @@ class Updater(object):
 
         phase_end = self.game.meta['schedule']['phase_end']
 
-        logger.info("Scheduled next update: %s",
-                    datetime.datetime.fromtimestamp(phase_end))
+        logger.info("Next update in: %s",
+                    datetime.timedelta(seconds=phase_end - time.time()))
 
         self.schedule_handle = self.ioloop.call_at(phase_end, self.run)
 
@@ -296,6 +297,7 @@ def make_app():
     connections = {}
 
     updater = Updater(g, connections)
+    updater.schedule_update()
 
     return tornado.web.Application([
         (r'/', MainHandler),
