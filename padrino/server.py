@@ -4,6 +4,7 @@ import json
 import jwt
 import logging
 import os
+import re
 import tornado.ioloop
 import tornado.options
 import tornado.web
@@ -172,6 +173,25 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
         })
 
 
+class PeekHandler(tornado.web.RequestHandler):
+    def initialize(self, game):
+        self.game = game
+
+    def get(self):
+        if not self.game.check_poke_token(self.request.query.encode('utf-8')):
+            self.send_error(403)
+            return
+
+        raw_plan = self.game.get_current_raw_plan_view()
+        self.set_header('Content-Type', 'text/plain')
+        self.write('\n'.join(
+            self.game.meta['players'][raw_plan[i]['source']]['name'] + ': ' +
+            re.sub(r'\$(\d+)', lambda m: act['targets'][int(m.group(1))],
+                   act['command'])
+            for i, act in enumerate(self.game.interpret_raw_plan_view(raw_plan))
+            if act['targets'] is not None))
+
+
 class PokeHandler(tornado.web.RequestHandler):
     def initialize(self, game, updater):
         self.game = game
@@ -206,7 +226,7 @@ class Updater(object):
         self.game = game
         self.connections = connections
         self.schedule_handle = None
-        
+
         self.keep_alive_handle = tornado.ioloop.PeriodicCallback(self.keep_alive, 30 * 1000)
         self.keep_alive_handle.start()
 
@@ -277,6 +297,7 @@ def make_app():
 
     return tornado.web.Application([
         (r'/', MainHandler),
+        (r'/_peek', PeekHandler, {'game': g}),
         (r'/_poke', PokeHandler, {'game': g, 'updater': updater}),
         (r'/_refresh', RefreshHandler, {'game': g, 'connections': connections}),
         (r'/ws', GameSocketHandler, {'game': g, 'connections': connections,
