@@ -390,7 +390,7 @@ class DayResult extends React.Component {
                 </p>
                 : null}
             {this.props.lynched !== null
-                ? <p>{this.props.lynched.name} the {this.props.lynched.role} was lynched.</p>
+                ? <p><strong>{this.props.lynched.name}</strong> the <strong>{this.props.lynched.role}</strong> was lynched.</p>
                 : <p>Nobody was lynched.</p>}
             <ul>
                 {Object.keys(this.props.votes).sort().map((e) => {
