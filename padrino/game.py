@@ -56,10 +56,11 @@ class Game(object):
                 'winners': [self.meta['players'][player_id]['name']
                             for player_id, player in self.players.items()
                             if fates[player['faction']]],
-                'roles': {
-                    self.meta['players'][player_id]['name']:
-                    self.meta['players'][player_id]['role']
-                    for player_id, player in self.players.items()
+                'players': {
+                    self.meta['players'][player_id]['name']: {
+                        'role': self.meta['players'][player_id]['role'],
+                        'faction': self.meta['factions'][player['faction']]['name']
+                    } for player_id, player in self.players.items()
                 },
                 'log': self.get_game_log()
             }
@@ -348,9 +349,10 @@ class Game(object):
 
     def get_player_flips(self):
         return {
-            self.meta['players'][player_id]['name']:
-                self.meta['players'][player_id]['role']
-                if player['dead'] else None
+            self.meta['players'][player_id]['name']: {
+                'role': self.meta['players'][player_id]['role'],
+                'faction': self.meta['factions'][player['faction']]['name']
+            } if player['dead'] else None
             for player_id, player in self.players.items()
         }
 

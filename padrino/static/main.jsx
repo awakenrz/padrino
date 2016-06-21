@@ -474,8 +474,8 @@ class Profile extends React.Component {
                 <dd>
                     <ul>
                         {Object.keys(this.props.players).sort().map(name => {
-                            let role = this.props.players[name];
-                            return <li key={name}>{role === null ? name : <abbr title={role}><del>{name}</del></abbr>}</li>;
+                            let player = this.props.players[name];
+                            return <li key={name}>{player === null ? name : <abbr title={player.faction + ' ' + player.role}><del>{name}</del></abbr>}</li>;
                         })}
                     </ul>
                 </dd>
@@ -515,8 +515,10 @@ class End extends React.Component {
 
             <h4>Roles</h4>
             <ul>
-                {Object.keys(this.props.roles).sort().map(player =>
-                    <li key={player}><strong>{player}</strong>: {this.props.roles[player]}</li>)}
+                {Object.keys(this.props.players).sort().map(name => {
+                    let player = this.props.players[name];
+                    return <li key={name}><strong>{name}</strong>: {player.faction} {player.role}</li>;
+                })}
             </ul>
             <h4>True Action Log</h4>
             <p>
@@ -749,7 +751,7 @@ class Root extends React.Component {
                              hammer={this.state.publicInfo.rules.indexOf('hammer') !== -1} /> :
                         <End winners={this.state.phaseState.winners}
                              log={this.state.phaseState.log}
-                             roles={this.state.phaseState.roles}
+                             players={this.state.phaseState.players}
                              me={this.state.playerState.name} />}
                     {results}
                     <Start motd={this.state.publicInfo.motd}
