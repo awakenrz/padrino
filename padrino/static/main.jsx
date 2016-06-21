@@ -350,7 +350,7 @@ class Day extends Phase {
             {this.heading("Day", this.props.hammer ? " or strict majority reached" : "")}
             {this.props.deaths.length > 0
                 ? <p>{this.props.deaths.map(player =>
-                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.role}</strong> was found dead. </span>)}
+                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.faction} {player.role}</strong> was found dead. </span>)}
                 </p>
                 : null}
             <ul>
@@ -386,7 +386,7 @@ class DayResult extends React.Component {
             <h3>Day {this.props.turn} <small>ended</small></h3>
             {this.props.deaths.length > 0
                 ? <p>{this.props.deaths.map(player =>
-                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.role}</strong> died. </span>)}
+                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.faction} {player.role}</strong> died. </span>)}
                 </p>
                 : null}
             {this.props.lynched !== null
@@ -437,7 +437,7 @@ class NightResult extends React.Component {
             <h3>Night {this.props.turn} <small>ended</small></h3>
             {this.props.deaths.length > 0
                 ? <p>{this.props.deaths.map(player =>
-                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.role}</strong> died. </span>)}
+                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.faction} {player.role}</strong> died. </span>)}
                 </p>
                 : <p>Nobody died.</p>}
 

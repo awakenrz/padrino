@@ -175,6 +175,7 @@ class Game(object):
         return [{
             'name': self.meta['players'][player]['name'],
             'role': self.meta['players'][player]['role'],
+            'faction': self.meta['factions'][self.players[player]['faction']]['name'],
             'lynched': cause == 'Lynched'
         } for player, cause in deaths.items()]
 
