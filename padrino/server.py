@@ -44,8 +44,8 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
             'type': 'root',
             'body': {
                 'publicState': self.game.get_public_state(),
+                'playerState': self.game.get_player_state(self.me_id),
                 'publicInfo': self.game.get_public_info(),
-                'playerInfo': self.game.get_player_info(self.me_id),
                 'phaseState': self.game.get_phase_state(self.me_id),
                 'nightResults': self.game.get_night_result_views(self.me_id),
                 'dayResults': self.game.get_day_result_views(self.me_id)
@@ -87,6 +87,7 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                     'type': 'root',
                     'body': {
                         'publicState': self.game.get_public_state(),
+                        'playerState': self.game.get_player_state(self.me_id),
                         'phaseState': phase_state
                     }
                 })
@@ -250,6 +251,7 @@ class Updater(object):
                     'type': 'pend',
                     'body': {
                         'publicState': self.game.get_public_state(),
+                        'playerState': self.game.get_player_state(player_id),
                         'phaseState': self.game.get_phase_state(player_id),
                         'phase': phase,
                         'result': self.game.get_day_result_view(turn, player_id)

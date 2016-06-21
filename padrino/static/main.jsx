@@ -455,13 +455,10 @@ class Profile extends React.Component {
             <h2 style={{textDecoration: this.props.players[this.props.name] === null ? null : 'line-through'}}>{this.props.name}</h2>
             <dl>
                 <dt>Role</dt>
-                <dd>{this.props.role}</dd>
+                <dd>{this.props.faction} {this.props.role}</dd>
 
                 <dt>Abilities</dt>
                 <dd>{this.props.abilities}</dd>
-
-                <dt>Faction</dt>
-                <dd>{this.props.faction}</dd>
 
                 <dt>Agenda</dt>
                 <dd>{this.props.agenda}</dd>
@@ -663,6 +660,7 @@ class Root extends React.Component {
         this.client.onPhaseEndMessage = end => {
             let state = {
                 publicState: end.publicState,
+                playerState: end.playerState,
                 phaseState: end.phaseState
             };
 
@@ -744,7 +742,7 @@ class Root extends React.Component {
                              turn={this.state.publicState.turn}
                              end={this.state.publicState.phaseEnd}
                              plan={this.state.phaseState.plan}
-                             me={this.state.playerInfo.name}
+                             me={this.state.playerState.name}
                              ballot={this.state.phaseState.ballot}
                              deaths={this.state.phaseState.deaths}
                              messages={this.state.phaseState.messages}
@@ -752,19 +750,19 @@ class Root extends React.Component {
                         <End winners={this.state.phaseState.winners}
                              log={this.state.phaseState.log}
                              roles={this.state.phaseState.roles}
-                             me={this.state.playerInfo.name} />}
+                             me={this.state.playerState.name} />}
                     {results}
                     <Start motd={this.state.publicInfo.motd}
                            rules={this.state.publicInfo.rules} />
                 </div>
 
                 <div className="col-md-2 col-md-pull-10">
-                    <Profile name={this.state.playerInfo.name}
-                             role={this.state.playerInfo.role}
-                             abilities={this.state.playerInfo.abilities}
-                             faction={this.state.playerInfo.faction}
-                             agenda={this.state.playerInfo.agenda}
-                             friends={this.state.playerInfo.friends}
+                    <Profile name={this.state.playerState.name}
+                             role={this.state.playerState.role}
+                             abilities={this.state.playerState.abilities}
+                             faction={this.state.playerState.faction}
+                             agenda={this.state.playerState.agenda}
+                             friends={this.state.playerState.friends}
                              players={this.state.publicState.players} />
                 </div>
             </div>

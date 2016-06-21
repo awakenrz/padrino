@@ -69,11 +69,12 @@ class Builder(object):
         self.action_group += 1
         return i
 
-    def make_grant(self, action, group, compulsion='Voluntary', *args,
-                   **kwargs):
+    def make_grant(self, action, group, compulsion='Voluntary',
+                   irrevocable=False, *args, **kwargs):
         return self.make_effect(
             type=self.tycon('Granted', grantedAction=action, grantedGroup=group,
-                            grantedCompulsion=compulsion),
+                            grantedCompulsion=compulsion,
+                            grantedIrrevocable=irrevocable),
             *args, **kwargs)
 
     def declare_action(self, command, description, **kwargs):

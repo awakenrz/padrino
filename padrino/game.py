@@ -323,7 +323,7 @@ class Game(object):
             'rules': list(self.meta['rules'])
         }
 
-    def get_player_info(self, player_id):
+    def get_player_state(self, player_id):
         player_meta = self.meta['players'][player_id]
 
         faction_id = self.players[player_id]['faction']
