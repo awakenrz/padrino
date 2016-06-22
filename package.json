@@ -1,7 +1,7 @@
 {
   "name": "padrino",
   "version": "1.0.0",
-  "description": "1. Make sure you have a copy of [cosanostra](https://github.com/rfw/cosanostra)\r    checked out.",
+  "description": "",
   "main": "padrino/app/main.jsx",
   "scripts": {
     "dev": "webpack -d --watch",
