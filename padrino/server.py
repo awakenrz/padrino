@@ -277,7 +277,6 @@ class Updater(object):
         self.schedule_handle = self.ioloop.call_at(phase_end, self.run)
 
     def keep_alive(self):
-        logger.info("Pinging all connections.")
         for connections in self.connections.values():
             for connection in connections:
                 connection.ping(b'')

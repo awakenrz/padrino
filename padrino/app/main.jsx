@@ -1,3 +1,7 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Remarkable from 'remarkable';
+
 function parseCommand(command) {
     let parts = [];
     let groups = 0;
@@ -466,7 +470,12 @@ class Profile extends React.Component {
                 <dt>Friends</dt>
                 <dd>
                     {this.props.friends.length > 0 ? <ul>
-                        {this.props.friends.sort().map(name => <li key={name}>{name}</li>)}
+                        {this.props.friends.sort().map(name => {
+                            let player = this.props.players[name];
+                            return <li key={name}>{player === null
+                                ? name
+                                : <abbr title={player.faction + ' ' + player.role}><del>{name}</del></abbr>}</li>;
+                        })}
                     </ul> : 'none'}
                 </dd>
 
@@ -475,7 +484,9 @@ class Profile extends React.Component {
                     <ul>
                         {Object.keys(this.props.players).sort().map(name => {
                             let player = this.props.players[name];
-                            return <li key={name}>{player === null ? name : <abbr title={player.faction + ' ' + player.role}><del>{name}</del></abbr>}</li>;
+                            return <li key={name}>{player === null
+                                ? name
+                                : <abbr title={player.faction + ' ' + player.role}><del>{name}</del></abbr>}</li>;
                         })}
                     </ul>
                 </dd>
