@@ -5,7 +5,7 @@
   "main": "padrino/app/main.jsx",
   "scripts": {
     "dev": "webpack -d --watch",
-    "build": "webpack -p"
+    "build": "NODE_ENV=production webpack -p"
   },
   "repository": {
     "type": "git",
