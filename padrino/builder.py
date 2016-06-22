@@ -107,7 +107,8 @@ class Builder(object):
         ref = Ref(len(self.meta['players']), {
             'name': name,
             'role': role,
-            'abilities': abilities
+            'abilities': abilities,
+            'will': ''
         }, effects)
         self.meta['players'][ref.token] = ref.meta
         self.state['players'][ref.token] = ref.traits

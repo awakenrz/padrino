@@ -47,6 +47,12 @@ class Game(object):
     def is_game_over(self):
         return all(fate is not None for fate in self.get_raw_fates().values())
 
+    def set_will_for(self, player_id, will):
+        if self.players[player_id]['dead']:
+            raise ValueError('player is dead, cannot set will anymore')
+        self.meta['players'][player_id]['will'] = will
+        self.save_meta()
+
     def get_phase_state(self, player_id):
         fates = self.get_raw_fates()
 
@@ -69,6 +75,7 @@ class Game(object):
             return {
                 'phase': 'Night',
                 'plan': self.get_current_plan_view(player_id),
+                'will': self.meta['players'][player_id]['will']
             }
 
         if self.state['phase'] == 'Day':
@@ -86,6 +93,7 @@ class Game(object):
                 'deaths': self.get_current_deaths_view(),
                 'messages': self.get_current_messages_view(player_id, raw_plan),
                 'plan': self.interpret_raw_plan_view(raw_plan),
+                'will': self.meta['players'][player_id]['will']
             }
 
     def get_game_log(self):
@@ -176,7 +184,8 @@ class Game(object):
             'name': self.meta['players'][player]['name'],
             'role': self.meta['players'][player]['role'],
             'faction': self.meta['factions'][self.players[player]['faction']]['name'],
-            'lynched': cause == 'Lynched'
+            'lynched': cause == 'Lynched',
+            'will': self.meta['players'][player]['will']
         } for player, cause in deaths.items()]
 
     def get_current_messages_view(self, player_id, raw_plan):

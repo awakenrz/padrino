@@ -151,6 +151,16 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                     }
                 })
 
+    def on_will_message(self, body):
+        self.game.set_will_for(self.me_id, body)
+        for connection in self.connections[self.me_id]:
+            connection.write_message({
+                'type': 'root',
+                'body': {
+                    'phaseState': self.game.get_phase_state(self.me_id)
+                }
+            })
+
     def on_message(self, msg):
         payload = json.loads(msg)
         body = payload['body']
@@ -163,6 +173,8 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                 self.on_vote_message(body)
             elif payload['type'] == 'impulse':
                 self.on_impulse_message(body)
+            elif payload['type'] == 'will':
+                self.on_will_message(body)
             else:
                 ok = False
         except Exception:

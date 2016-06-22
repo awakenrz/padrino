@@ -302,6 +302,58 @@ class Vote extends React.Component {
     }
 }
 
+class Will extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            editing: false,
+            waiting: false
+        };
+    }
+
+    startEdit() {
+        this.setState({editing: true});
+    }
+
+    onSubmit(e) {
+        e.preventDefault();
+
+        this.setState({waiting: true});
+        this.props.client.request('will', e.target.elements.will.value).then(
+            () => this.dismiss(), () => this.dismiss());
+    }
+
+    dismiss() {
+        this.setState({
+            editing: false,
+            waiting: false
+        });
+    }
+
+    onCancel() {
+        this.dismiss();
+    }
+
+    render() {
+        return <div>
+            <h4>Will</h4>
+            {!this.state.editing
+                ? <p>{this.props.will !== ''
+                    ? this.props.will
+                    : <em>You are currently not leaving a will.</em>}
+                    <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
+                </p>
+                : <form onSubmit={this.onSubmit.bind(this)}>
+                    <fieldset disabled={this.state.waiting}>
+                        <div className="form-group">
+                            <textarea autoFocus className="form-control" name="will" defaultValue={this.props.will} rows={5}></textarea>
+                        </div>
+                        <button type="submit" className="btn btn-primary">Submit</button> <button type="button" className="btn btn-default" onClick={this.onCancel.bind(this)}>Cancel</button>
+                    </fieldset>
+                </form>}
+        </div>;
+    }
+}
 
 class Plan extends React.Component {
     render() {
@@ -353,9 +405,8 @@ class Day extends Phase {
         return <div>
             {this.heading("Day", this.props.hammer ? " or strict majority reached" : "")}
             {this.props.deaths.length > 0
-                ? <p>{this.props.deaths.map(player =>
-                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.faction} {player.role}</strong> died. </span>)}
-                </p>
+                ? this.props.deaths.map(player =>
+                    <Death key={player.name} player={player} reason="died" />)
                 : null}
             <ul>
                 {Object.keys(this.props.ballot.votes).sort().map((e, i) => {
@@ -380,6 +431,19 @@ class Day extends Phase {
                           saveButtonCaption='Perform' />
                 </div>
                 : null}
+
+            {!this.props.dead ? <Will client={this.props.client} will={this.props.will} /> : null}
+        </div>;
+    }
+}
+
+class Death extends React.Component {
+    render() {
+        return <div>
+            <p>
+                <strong>{this.props.player.name}</strong> the <strong>{this.props.player.faction} {this.props.player.role}</strong> {this.props.reason}.{' '}
+                <strong>The last will and testament of {this.props.player.name}</strong>: {this.props.player.will !== '' ? this.props.player.will : <em>This player did not leave a will.</em>}
+            </p>
         </div>;
     }
 }
@@ -389,12 +453,11 @@ class DayResult extends React.Component {
         return <div>
             <h3>Day {this.props.turn} <small>ended</small></h3>
             {this.props.deaths.length > 0
-                ? <p>{this.props.deaths.map(player =>
-                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.faction} {player.role}</strong> died. </span>)}
-                </p>
+                ? this.props.deaths.map(player =>
+                    <Death key={player.name} player={player} reason="died" />)
                 : null}
             {this.props.lynched !== null
-                ? <p><strong>{this.props.lynched.name}</strong> the <strong>{this.props.lynched.role}</strong> was lynched.</p>
+                ? <Death player={this.props.lynched} reason="was lynched" />
                 : <p>Nobody was lynched.</p>}
             <ul>
                 {Object.keys(this.props.votes).sort().map((e) => {
@@ -431,6 +494,7 @@ class Night extends Phase {
                   messages={[]}
                   saveButtonClass='primary'
                   saveButtonCaption='Plan' />
+            {!this.props.dead ? <Will client={this.props.client} will={this.props.will} /> : null}
         </div>;
     }
 }
@@ -440,9 +504,8 @@ class NightResult extends React.Component {
         return <div>
             <h3>Night {this.props.turn} <small>ended</small></h3>
             {this.props.deaths.length > 0
-                ? <p>{this.props.deaths.map(player =>
-                    <span key={player.name}><strong>{player.name}</strong> the <strong>{player.faction} {player.role}</strong> was found dead. </span>)}
-                </p>
+                ? this.props.deaths.map(player =>
+                    <Death key={player.name} player={player} reason="was found dead" />)
                 : <p>Nobody died.</p>}
 
             <Plan plan={this.props.plan}
@@ -741,6 +804,8 @@ class Root extends React.Component {
             }
         }
 
+        let dead = this.state.publicState.players[this.state.playerState.name] !== null;
+
         return <div className="container">
             <div className="row">
                 <div className="col-md-12"><h1>{this.state.publicInfo.name}</h1></div>
@@ -756,12 +821,18 @@ class Root extends React.Component {
                         <Night client={this.client}
                                turn={this.state.publicState.turn}
                                end={this.state.publicState.phaseEnd}
-                               plan={this.state.phaseState.plan} /> :
+                               plan={this.state.phaseState.plan}
+                               will={this.state.phaseState.will}
+                               dead={dead}
+                               players={this.state.publicState.players} /> :
                      this.state.phaseState.phase == 'Day' ?
                         <Day client={this.client}
                              turn={this.state.publicState.turn}
                              end={this.state.publicState.phaseEnd}
                              plan={this.state.phaseState.plan}
+                             will={this.state.phaseState.will}
+                             dead={dead}
+                             players={this.state.publicState.players}
                              me={this.state.playerState.name}
                              ballot={this.state.phaseState.ballot}
                              deaths={this.state.phaseState.deaths}
