@@ -496,12 +496,19 @@ class Profile extends React.Component {
 }
 
 class Start extends React.Component {
-    render() {
-        let md = new Remarkable();
+    constructor(props) {
+        super(props);
+        this.remarkable = new Remarkable('full', {
+          html: true,
+          linkify: true,
+          typographer: true,
+        });
+    }
 
+    render() {
         return <div>
             <h3>Start</h3>
-            <div dangerouslySetInnerHTML={{__html: md.render(this.props.motd)}}></div>
+            <div dangerouslySetInnerHTML={{__html: this.remarkable.render(this.props.motd)}}></div>
         </div>;
     }
 }
