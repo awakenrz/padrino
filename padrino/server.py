@@ -48,6 +48,7 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                 'playerState': self.game.get_player_state(self.me_id),
                 'publicInfo': self.game.get_public_info(),
                 'phaseState': self.game.get_phase_state(self.me_id),
+                'will': self.game.get_will(self.me_id),
                 'nightResults': self.game.get_night_result_views(self.me_id),
                 'dayResults': self.game.get_day_result_views(self.me_id)
             }
@@ -157,7 +158,7 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
             connection.write_message({
                 'type': 'root',
                 'body': {
-                    'phaseState': self.game.get_phase_state(self.me_id)
+                    'will': self.game.get_will(self.me_id)
                 }
             })
 

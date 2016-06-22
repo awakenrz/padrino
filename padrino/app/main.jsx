@@ -822,7 +822,7 @@ class Root extends React.Component {
                                turn={this.state.publicState.turn}
                                end={this.state.publicState.phaseEnd}
                                plan={this.state.phaseState.plan}
-                               will={this.state.phaseState.will}
+                               will={this.state.will}
                                dead={dead}
                                players={this.state.publicState.players} /> :
                      this.state.phaseState.phase == 'Day' ?
@@ -830,7 +830,7 @@ class Root extends React.Component {
                              turn={this.state.publicState.turn}
                              end={this.state.publicState.phaseEnd}
                              plan={this.state.phaseState.plan}
-                             will={this.state.phaseState.will}
+                             will={this.state.will}
                              dead={dead}
                              players={this.state.publicState.players}
                              me={this.state.playerState.name}

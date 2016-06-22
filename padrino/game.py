@@ -53,6 +53,9 @@ class Game(object):
         self.meta['players'][player_id]['will'] = will
         self.save_meta()
 
+    def get_will(self, player_id):
+        return self.meta['players'][player_id]['will']
+
     def get_phase_state(self, player_id):
         fates = self.get_raw_fates()
 
@@ -74,8 +77,7 @@ class Game(object):
         if self.state['phase'] == 'Night':
             return {
                 'phase': 'Night',
-                'plan': self.get_current_plan_view(player_id),
-                'will': self.meta['players'][player_id]['will']
+                'plan': self.get_current_plan_view(player_id)
             }
 
         if self.state['phase'] == 'Day':
@@ -92,8 +94,7 @@ class Game(object):
                 'ballot': self.get_current_ballot(),
                 'deaths': self.get_current_deaths_view(),
                 'messages': self.get_current_messages_view(player_id, raw_plan),
-                'plan': self.interpret_raw_plan_view(raw_plan),
-                'will': self.meta['players'][player_id]['will']
+                'plan': self.interpret_raw_plan_view(raw_plan)
             }
 
     def get_game_log(self):
