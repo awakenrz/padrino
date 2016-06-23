@@ -144,13 +144,9 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
             target = players[body['target']]
 
         # We can't compute the majority ourselves due to vote thief etc.
-        has_majority = self.game.vote(self.me_id, target)
-        vote_method = self.game.meta['vote_method']
+        consensus_met = self.game.vote(self.me_id, target)
 
-        if (vote_method == game.Game.VOTE_HAMMER and has_majority) or \
-           (vote_method == game.Game.VOTE_FULL and
-            all(player is not None
-                for player in self.game.get_current_ballot()['votes'].values())):
+        if self.game.meta['lynch_on_consensus_met'] and consensus_met:
             self.game.skip_to_twilight()
             self.updater.schedule_update()
 

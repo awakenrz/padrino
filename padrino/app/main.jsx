@@ -426,21 +426,12 @@ class Day extends Phase {
     }
 
     render() {
-        let endCriteria;
-        switch (this.props.voteMethod) {
-            case 'default':
-                endCriteria = '';
-                break;
-            case 'hammer':
-                endCriteria = 'or strict majority reached';
-                break;
-            case 'full':
-                endCriteria = 'or all votes in';
-                break;
-        }
-
         return <div>
-            {this.heading("Day", endCriteria)}
+            {this.heading("Day", this.props.lynchOnConsensusMet ? 'or on consensus' : '')}
+            <p><strong>Consensus required:</strong> {{
+                MostVotes: 'The player with the most votes will be lynched.',
+                StrictMajority: 'The player who the strict majority of living players are voting for will be lynched.'
+            }[this.props.consensus]}</p>
             {this.props.deaths.length > 0
                 ? this.props.deaths.map(player =>
                     <Death key={player.name} player={player} reason="died" />)
@@ -885,7 +876,8 @@ class Root extends React.Component {
                              turn={this.state.publicState.turn}
                              end={this.state.phaseState.end}
                              twilightDuration={this.state.publicInfo.twilightDuration}
-                             voteMethod={this.state.publicInfo.voteMethod}
+                             consensus={this.state.publicInfo.consensus}
+                             lynchOnConsensusMet={this.state.publicInfo.lynchOnConsensusMet}
                              plan={this.state.phaseState.plan}
                              will={this.state.will}
                              dead={dead}

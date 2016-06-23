@@ -13,10 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class Game(object):
-    VOTE_DEFAULT = 'default'
-    VOTE_HAMMER = 'hammer'
-    VOTE_FULL = 'full'
-
     def __init__(self, root):
         self.root = root
 
@@ -340,7 +336,8 @@ class Game(object):
         return {
             'name': self.meta['name'],
             'motd': self.meta['motd'],
-            'voteMethod': self.meta['vote_method'],
+            'consensus': self.state['consensus'],
+            'lynchOnConsensusMet': self.meta['lynch_on_consensus_met'],
             'twilightDuration': self.meta['schedule']['twilight_duration']
         }
 
