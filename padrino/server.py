@@ -201,11 +201,20 @@ class PeekHandler(tornado.web.RequestHandler):
         self.game = game
 
     def get(self):
-        if not self.game.check_poke_token(self.request.query.encode('utf-8')):
+        token = self.get_argument('token')
+
+        if not self.game.check_poke_token(token):
             self.send_error(403)
             return
 
-        raw_plan = self.game.get_current_raw_plan_view()
+        turn = self.get_argument('turn', None)
+        phase = self.get_argument('phase', None)
+
+        if turn is None:
+            raw_plan = self.game.get_current_raw_plan_view()
+        else:
+            raw_plan = self.game.get_raw_plan_view(int(turn), phase)
+
         self.set_header('Content-Type', 'text/plain')
         self.write('\n'.join(
             self.game.meta['players'][raw_plan[i]['source']]['name'] + ': ' +
