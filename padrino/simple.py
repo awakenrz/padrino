@@ -98,6 +98,11 @@ def make_simple(b):
             'Commit suicide.',
             type=b.tycon('Suicide'))
 
+        STEAL_VOTE = b.declare_action(
+            'steal vote from $0',
+            'Steal a vote from another player.',
+            type=b.tycon('StealVote'))
+
     Actions.KILL = KILL
 
     class Simple:
