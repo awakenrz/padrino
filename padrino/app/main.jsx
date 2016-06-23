@@ -434,7 +434,7 @@ class Day extends Phase {
                 : null}
             <p><strong>Consensus required:</strong> {{
                 MostVotes: 'The player with the most votes will be lynched.',
-                StrictMajority: 'The player who the strict majority of living players are voting for will be lynched.'
+                StrictMajority: 'The player who the strict majority of votes are for will be lynched.'
             }[this.props.consensus]}</p>
             <ul>
                 {Object.keys(this.props.ballot.votes).sort().map((e, i) => {
