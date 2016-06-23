@@ -333,6 +333,12 @@ class Will extends React.Component {
             editing: false,
             waiting: false
         };
+
+        this.remarkable = new Remarkable('full', {
+            html: false,
+            linkify: true,
+            typographer: true,
+        });
     }
 
     startEdit() {
@@ -360,13 +366,11 @@ class Will extends React.Component {
 
     render() {
         return <div>
-            <h4>Will</h4>
+            <h4>Will {!this.state.editing ? <small><button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button></small> : null}</h4>
             {!this.state.editing
-                ? <p>{this.props.will !== ''
-                    ? this.props.will
-                    : <em>You are currently not leaving a will.</em>}
-                    <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
-                </p>
+                ? this.props.will !== ''
+                    ? <div dangerouslySetInnerHTML={{__html: this.remarkable.render(this.props.will)}}></div>
+                    : <em>You are currently not leaving a will.</em>
                 : <form onSubmit={this.onSubmit.bind(this)}>
                     <fieldset disabled={this.state.waiting}>
                         <div className="form-group">
@@ -467,12 +471,36 @@ class Day extends Phase {
 }
 
 class Death extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            showingWill: false
+        };
+        this.remarkable = new Remarkable('full', {
+            html: false,
+            linkify: true,
+            typographer: true,
+        });
+    }
+
+    toggleWill() {
+        this.setState({showingWill: !this.state.showingWill});
+    }
+
     render() {
         return <div>
             <p>
-                <strong>{this.props.player.name}</strong> the <strong>{this.props.player.faction} {this.props.player.role}</strong> {this.props.reason}.{' '}
-                <strong>The last will and testament of {this.props.player.name}</strong>: {this.props.player.will !== '' ? this.props.player.will : <em>This player did not leave a will.</em>}
+                <strong>{this.props.player.name}</strong> the <strong>{this.props.player.faction} {this.props.player.role}</strong> {this.props.reason}.
+                {this.props.player.will !== ''
+                    ? <button type="button" onClick={this.toggleWill.bind(this)} className="btn-link" href="#">{this.state.showingWill ? 'Hide will' : 'Show will'}</button>
+                    : <span> No will was found.</span>}
             </p>
+            {this.state.showingWill
+                ? <div>
+                    <h4>The last will and testament of {this.props.player.name}</h4>
+                    <div dangerouslySetInnerHTML={{__html: this.remarkable.render(this.props.player.will)}}></div>
+                </div>
+                : null}
         </div>;
     }
 }
@@ -594,9 +622,9 @@ class Start extends React.Component {
     constructor(props) {
         super(props);
         this.remarkable = new Remarkable('full', {
-          html: true,
-          linkify: true,
-          typographer: true,
+            html: false,
+            linkify: true,
+            typographer: true,
         });
     }
 
