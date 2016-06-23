@@ -245,10 +245,10 @@ class Phase extends React.Component {
         return this.getTwilightTimeLeft() <= 0;
     }
 
-    heading(name) {
+    heading(name, primarySuffix='') {
         return <h3>{name} {this.props.turn} <small>{
             !this.isPrimaryEnding()
-                ? "ends in " + this.formatDuration(this.getPrimaryTimeLeft())
+                ? "ends in " + this.formatDuration(this.getPrimaryTimeLeft()) + (primarySuffix !== '' ? ' ' + primarySuffix : '')
                 : !this.isTwilightEnding()
                     ? "twilight ends in " + this.formatDuration(this.getTwilightTimeLeft())
                     : "ending..."}</small></h3>;
@@ -426,8 +426,21 @@ class Day extends Phase {
     }
 
     render() {
+        let endCriteria;
+        switch (this.props.voteMethod) {
+            case 'default':
+                endCriteria = '';
+                break;
+            case 'hammer':
+                endCriteria = 'or strict majority reached';
+                break;
+            case 'full':
+                endCriteria = 'or all votes in';
+                break;
+        }
+
         return <div>
-            {this.heading("Day")}
+            {this.heading("Day", endCriteria)}
             {this.props.deaths.length > 0
                 ? this.props.deaths.map(player =>
                     <Death key={player.name} player={player} reason="died" />)
@@ -845,7 +858,7 @@ class Root extends React.Component {
                     {this.state.phaseState.phase == 'Night' ?
                         <Night client={this.client}
                                turn={this.state.publicState.turn}
-                               end={this.state.publicState.phaseEnd}
+                               end={this.state.phaseState.end}
                                twilightDuration={0}
                                plan={this.state.phaseState.plan}
                                will={this.state.will}
@@ -854,8 +867,9 @@ class Root extends React.Component {
                      this.state.phaseState.phase == 'Day' ?
                         <Day client={this.client}
                              turn={this.state.publicState.turn}
-                             end={this.state.publicState.phaseEnd}
+                             end={this.state.phaseState.end}
                              twilightDuration={this.state.publicInfo.twilightDuration}
+                             voteMethod={this.state.publicInfo.voteMethod}
                              plan={this.state.phaseState.plan}
                              will={this.state.will}
                              dead={dead}

@@ -137,7 +137,16 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
         else:
             target = players[body['target']]
 
-        self.game.vote(self.me_id, target)
+        # We can't compute the majority ourselves due to vote thief etc.
+        has_majority = self.game.vote(self.me_id, target)
+        vote_method = self.game.meta['vote_method']
+
+        if (vote_method == game.Game.VOTE_HAMMER and has_majority) or \
+           (vote_method == game.Game.VOTE_FULL and
+            all(player is not None
+                for player in self.game.get_current_ballot()['votes'].values())):
+            self.game.skip_to_twilight()
+            self.updater.schedule_update()
 
         # Notify other users about our vote.
         for player_id, connections in self.connections.items():
@@ -245,10 +254,6 @@ class Updater(object):
         self.ioloop = tornado.ioloop.IOLoop.current()
 
     def run(self):
-        if self.schedule_handle is not None:
-            self.ioloop.remove_timeout(self.schedule_handle)
-            self.schedule_handle = None
-
         logger.info("Running scheduled update.")
 
         turn = self.game.state['turn']
@@ -275,6 +280,10 @@ class Updater(object):
         self.schedule_update()
 
     def schedule_update(self):
+        if self.schedule_handle is not None:
+            self.ioloop.remove_timeout(self.schedule_handle)
+            self.schedule_handle = None
+
         if self.game.is_game_over():
             logger.info("Game over!")
             return

@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class Game(object):
+    VOTE_DEFAULT = 'default'
+    VOTE_HAMMER = 'hammer'
+    VOTE_FULL = 'full'
+
     def __init__(self, root):
         self.root = root
 
@@ -77,7 +81,8 @@ class Game(object):
         if self.state['phase'] == 'Night':
             return {
                 'phase': 'Night',
-                'plan': self.get_current_plan_view(player_id)
+                'end': self.meta['schedule']['phase_end'],
+                'plan': self.get_current_plan_view(player_id),
             }
 
         if self.state['phase'] == 'Day':
@@ -91,6 +96,7 @@ class Game(object):
 
             return {
                 'phase': 'Day',
+                'end': self.meta['schedule']['phase_end'],
                 'ballot': self.get_current_ballot(),
                 'deaths': self.get_current_deaths_view(),
                 'messages': self.get_current_messages_view(player_id, raw_plan),
@@ -334,6 +340,7 @@ class Game(object):
         return {
             'name': self.meta['name'],
             'motd': self.meta['motd'],
+            'voteMethod': self.meta['vote_method'],
             'twilightDuration': self.meta['schedule']['twilight_duration']
         }
 
@@ -356,7 +363,6 @@ class Game(object):
     def get_public_state(self):
         return {
             'turn': self.state['turn'],
-            'phaseEnd': self.meta['schedule']['phase_end'],
             'players': self.get_player_flips()
         }
 
@@ -476,6 +482,11 @@ class Game(object):
             raise ValueError('cannot finish this phase')
 
         self.meta['schedule']['phase_end'] = self.get_next_end()
+        self.save_meta()
+
+    def skip_to_twilight(self):
+        self.meta['schedule']['phase_end'] = \
+            time.time() + self.meta['schedule']['twilight_duration']
         self.save_meta()
 
     def run_day(self):

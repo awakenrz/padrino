@@ -23,10 +23,7 @@ class Builder(object):
     def __init__(self, name, motd=None, night_end=datetime.time(10, 0),
                  day_end=datetime.time(12, 15),
                  twilight_duration=datetime.timedelta(0),
-                 tz='Etc/UTC', rules=None):
-        if rules is None:
-            rules = set()
-
+                 tz='Etc/UTC', vote_method=game.Game.VOTE_DEFAULT):
         self.state = {
             'history': [],
             'turn': 1,
@@ -49,10 +46,10 @@ class Builder(object):
                 'tz': tz,
             },
             'motd': motd,
+            'vote_method': vote_method,
             'actions': {},
             'factions': {},
             'players': {},
-            'rules': rules,
             'secret': random.getrandbits(256).to_bytes(256 // 8, 'little')
         }
 
