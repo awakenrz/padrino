@@ -204,7 +204,7 @@ class Phase extends React.Component {
     }
 
     componentDidUpdate() {
-        if (this.props.end - this.state.now < 0) {
+        if (this.isTwilightEnding()) {
             this.stopTimer();
         }
     }
@@ -225,13 +225,33 @@ class Phase extends React.Component {
         return hours + ':' + minutes + ':' + seconds;
     }
 
-    isEnding() {
-        return this.props.end - this.state.now <= 0;
+    getPrimaryEndTime() {
+        return this.props.end - this.props.twilightDuration;
+    }
+
+    getPrimaryTimeLeft() {
+        return this.getPrimaryEndTime() - this.state.now;
+    }
+
+    isPrimaryEnding() {
+        return this.getPrimaryTimeLeft() <= 0;
+    }
+
+    getTwilightTimeLeft() {
+        return this.props.end - this.state.now;
+    }
+
+    isTwilightEnding() {
+        return this.getTwilightTimeLeft() <= 0;
     }
 
     heading(name) {
-        let timeLeft = this.props.end - this.state.now;
-        return <h3>{name} {this.props.turn} <small>{!this.isEnding() ? "ends in " + this.formatDuration(timeLeft) : "ending..."}</small></h3>;
+        return <h3>{name} {this.props.turn} <small>{
+            !this.isPrimaryEnding()
+                ? "ends in " + this.formatDuration(this.getPrimaryTimeLeft())
+                : !this.isTwilightEnding()
+                    ? "twilight ends in " + this.formatDuration(this.getTwilightTimeLeft())
+                    : "ending..."}</small></h3>;
     }
 }
 
@@ -416,7 +436,7 @@ class Day extends Phase {
                 {Object.keys(this.props.ballot.votes).sort().map((e, i) => {
                     let target = this.props.ballot.votes[e];
                     return <Vote key={e}
-                                 canEdit={!this.isEnding()}
+                                 canEdit={!this.isPrimaryEnding()}
                                  client={this.props.client}
                                  source={e}
                                  target={target}
@@ -429,7 +449,7 @@ class Day extends Phase {
                 ? <div>
                     <p>Additionally, the following <strong>instantaneous</strong> actions are available, so choose carefully if you want to use one!</p>
                     <Plan plan={this.props.plan}
-                          onActionSave={this.onActionSave.bind(this)}
+                          onActionSave={!this.isTwilightEnding() ? this.onActionSave.bind(this) : null}
                           canEditAction={(i) => this.props.plan[i].targets === null}
                           messages={this.props.messages}
                           saveButtonClass='danger'
@@ -495,7 +515,7 @@ class Night extends Phase {
             {this.heading("Night")}
             <Plan plan={this.props.plan}
                   canEditAction={(i) => true}
-                  onActionSave={!this.isEnding() ? this.onActionSave.bind(this) : null}
+                  onActionSave={!this.isPrimaryEnding() ? this.onActionSave.bind(this) : null}
                   messages={[]}
                   saveButtonClass='primary'
                   saveButtonCaption='Plan' />
@@ -826,6 +846,7 @@ class Root extends React.Component {
                         <Night client={this.client}
                                turn={this.state.publicState.turn}
                                end={this.state.publicState.phaseEnd}
+                               twilightDuration={0}
                                plan={this.state.phaseState.plan}
                                will={this.state.will}
                                dead={dead}
@@ -834,6 +855,7 @@ class Root extends React.Component {
                         <Day client={this.client}
                              turn={this.state.publicState.turn}
                              end={this.state.publicState.phaseEnd}
+                             twilightDuration={this.state.publicInfo.twilightDuration}
                              plan={this.state.phaseState.plan}
                              will={this.state.will}
                              dead={dead}

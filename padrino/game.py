@@ -333,7 +333,8 @@ class Game(object):
     def get_public_info(self):
         return {
             'name': self.meta['name'],
-            'motd': self.meta['motd']
+            'motd': self.meta['motd'],
+            'twilightDuration': self.meta['schedule']['twilight_duration']
         }
 
     def get_player_state(self, player_id):
@@ -355,9 +356,7 @@ class Game(object):
     def get_public_state(self):
         return {
             'turn': self.state['turn'],
-            'phaseEnd': self.meta['schedule']['phase_end'] -
-                        (0 if self.state['phase'] == 'Night' else
-                         self.meta['schedule']['twilight_duration']),
+            'phaseEnd': self.meta['schedule']['phase_end'],
             'players': self.get_player_flips()
         }
 
