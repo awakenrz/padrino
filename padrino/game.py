@@ -354,7 +354,8 @@ class Game(object):
             'faction': faction_meta['name'],
             'agenda': faction_meta['agenda'],
             'friends': [self.meta['players'][friend]['name']
-                        for friend in self.players[player_id]['friends']]
+                        for friend in self.players[player_id]['friends']],
+            'traitors': self.players[player_id]['traitors']
         }
 
     def get_public_state(self):
