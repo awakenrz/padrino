@@ -637,7 +637,20 @@ class Start extends React.Component {
 }
 
 class End extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {showExecuted: false};
+    }
+
+    toggleView() {
+        this.setState({showExecuted: !this.state.showExecuted});
+    }
+
     render() {
+        let view = this.state.showExecuted
+            ? this.props.log
+            : this.props.planned;
+
         return <div>
             <h3>End</h3>
             <p>{this.props.winners.indexOf(this.props.me) !== -1
@@ -661,17 +674,30 @@ class End extends React.Component {
                     return <li key={name}><strong>{name}</strong>: {player.faction} {player.role}</li>;
                 })}
             </ul>
-            <h4>True Action Log</h4>
-            <p>
-                These are the actions that occured at night with their actual
-                targets. Note that they may not be the actions originally
-                planned by each player (or even planned at all), not in order of
-                actual execution (bus drives may appear after bus driven
-                actions, for instance), and some may be missing (if they were
-                blocked). However, all actions present are guaranteed to be
-                executed.
-            </p>
-            {this.props.log.map((e, i) => <div key={i}>
+            <h4>Action Log <small><button type="button" onClick={this.toggleView.bind(this)} className="btn-link">{this.state.showExecuted
+                    ? 'Switch to planned view'
+                    : 'Switch to executed view'}</button></small></h4>
+
+            {this.state.showExecuted
+                ? <p>
+                    <strong>Executed view:</strong>{' '}
+                    These are the actions that occured at night with their
+                    actual targets. Note that they may not be the actions
+                    originally planned by each player (or even planned at all),
+                    not in order of actual execution (bus drives may appear
+                    after bus driven actions, for instance), and some may be
+                    missing (if they were blocked). However, all actions present
+                    are guaranteed to be executed.
+                </p>
+                : <p>
+                    <strong>Planned view:</strong>{' '}
+                    These are the actions that were planned by players, as-is.
+                    Note that they do not take into account actions that were
+                    blocked or otherwise altered, and are not in any specific
+                    order.
+                </p>}
+
+            {view.map((e, i) => <div key={i}>
                 <h5>{e.phase} {e.turn}</h5>
                 <ul>{e.acts.length > 0 ? e.acts.map((e, i) => {
                     return <li key={i}><strong>{e.source}</strong>: {parseCommand(e.command).parts.map((part, i) => {
@@ -919,6 +945,7 @@ class Root extends React.Component {
                              messages={this.state.phaseState.messages} /> :
                         <End winners={this.state.phaseState.winners}
                              log={this.state.phaseState.log}
+                             planned={this.state.phaseState.planned}
                              players={this.state.phaseState.players}
                              me={this.state.playerState.name} />}
                     {results}

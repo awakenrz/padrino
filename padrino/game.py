@@ -71,7 +71,8 @@ class Game(object):
                         'faction': self.meta['factions'][player['faction']]['name']
                     } for player_id, player in self.players.items()
                 },
-                'log': self.get_game_log()
+                'log': self.get_game_log(),
+                'planned': self.get_game_planned(),
             }
 
         if self.state['phase'] == 'Night':
@@ -129,6 +130,37 @@ class Game(object):
                 'acts': history.get(self.state['turn'], {}).get('Night', [])
             })
         return log
+
+    def get_final_plan_view(self, turn, phase):
+        return [{
+            'command': self.meta['actions'][info['action']]['command'],
+            'source': self.meta['players'][info['act']['source']]['name'],
+            'targets': None if info['act'] is None else [
+                self.meta['players'][target]['name']
+                for target in info['act']['targets']]
+        } for info in self.get_raw_plan_view(turn, phase)
+          if info['act'] is not None]
+
+    def get_game_planned(self):
+        planned = []
+        for turn in range(1, self.state['turn']):
+            planned.append({
+                'turn': turn,
+                'phase': 'Night',
+                'acts': self.get_final_plan_view(turn, 'night')
+            })
+            planned.append({
+                'turn': turn,
+                'phase': 'Day',
+                'acts': self.get_final_plan_view(turn, 'day')
+            })
+        if self.state['phase'] == 'Day':
+            planned.append({
+                'turn': self.state['turn'],
+                'phase': 'Night',
+                'acts': self.get_final_plan_view(turn, 'night')
+            })
+        return planned
 
     def interpret_log_act(self, act):
         return {
