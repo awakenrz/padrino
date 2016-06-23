@@ -391,7 +391,16 @@ class Game(object):
                           algorithm='HS256').decode('utf-8')
 
     def decode_token(self, token):
-        return jwt.decode(token, self.meta['secret'], algorithms=['HS256'])['t']
+        try:
+            payload = jwt.decode(token, self.meta['secret'],
+                                 algorithms=['HS256'])
+        except jwt.exceptions.DecodeError:
+            raise ValueError('unauthorized token')
+
+        try:
+            return payload['t']
+        except KeyError:
+            raise ValueError('bad token')
 
     def get_night_end(self):
         return datetime.datetime.strptime(

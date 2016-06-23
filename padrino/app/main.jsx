@@ -674,6 +674,7 @@ class Client {
         this.onPhaseEndMessage = () => {};
         this.onOpen = () => {};
         this.onClose = () => {};
+        this.onError = () => {};
 
         this.resetBackoff();
         this.connect();
@@ -731,7 +732,12 @@ class Client {
         };
 
         this.promises = {};
-        this.socket.onclose = () => {
+        this.socket.onclose = (e) => {
+            if (e.code === 4000) {
+                this.onError(e.reason);
+                return;
+            }
+
             this.onClose();
             window.setTimeout(() => {
                 this.connect();
@@ -764,7 +770,8 @@ class Root extends React.Component {
         super(props);
         this.state = {
             ready: false,
-            connected: false
+            connected: false,
+            error: null
         };
     }
 
@@ -803,6 +810,9 @@ class Root extends React.Component {
         this.client.onClose = () => {
             this.setState({connected: false});
         };
+        this.client.onError = (reason) => {
+            this.setState({connected: false, error: reason});
+        };
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -812,6 +822,12 @@ class Root extends React.Component {
     }
 
     render() {
+        if (this.state.error !== null) {
+            return <div className="container">
+                <div className="alert alert-danger">Permanently disconnected from server: {this.state.error}</div>
+            </div>;
+        }
+
         if (!this.state.ready) {
             return <div>Loading...</div>;
         }

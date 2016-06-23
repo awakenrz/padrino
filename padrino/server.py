@@ -34,10 +34,15 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
         self.game = game
         self.connections = connections
         self.updater = updater
+        self.me_id = None
 
     def open(self):
         token = self.request.query.encode('utf-8')
-        self.me_id = self.game.decode_token(token)
+        try:
+            self.me_id = self.game.decode_token(token)
+        except ValueError:
+            self.close(4000, "Invalid token.")
+            return
         self.connections.setdefault(self.me_id, set()).add(self)
 
         # Send root state information.
@@ -55,7 +60,8 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
         })
 
     def on_close(self):
-        self.connections[self.me_id].remove(self)
+        if self.me_id is not None:
+            self.connections[self.me_id].remove(self)
 
     def on_impulse_message(self, body):
         if body['targets'] is None:
