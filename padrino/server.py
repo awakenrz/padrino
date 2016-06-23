@@ -222,6 +222,7 @@ class PokeHandler(tornado.web.RequestHandler):
         if not self.game.check_poke_token(self.request.query.encode('utf-8')):
             self.send_error(403)
             return
+        self.updater.unschedule_update()
         self.updater.run()
         self.finish('ok')
 
@@ -279,10 +280,13 @@ class Updater(object):
 
         self.schedule_update()
 
-    def schedule_update(self):
+    def unschedule_update(self):
         if self.schedule_handle is not None:
             self.ioloop.remove_timeout(self.schedule_handle)
             self.schedule_handle = None
+
+    def schedule_update(self):
+        self.unschedule_update()
 
         if self.game.is_game_over():
             logger.info("Game over!")
