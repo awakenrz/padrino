@@ -120,7 +120,7 @@ class Action extends React.Component {
     }
 
     render() {
-        let editMode = this.state.editing && this.props.action.available;
+        let editMode = this.state.editing && this.props.action.available && this.props.onSave !== null;
 
         // ugh 0-target actions
         let editor;
@@ -165,7 +165,7 @@ class Action extends React.Component {
                                 : null}
                         {this.props.annotation ? <span> ⇒ <strong>{this.props.annotation}</strong></span> : null}
 
-                        {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onSave
+                        {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onSave !== null
                             ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                             : null}
                     </div>
@@ -225,9 +225,13 @@ class Phase extends React.Component {
         return hours + ':' + minutes + ':' + seconds;
     }
 
-    heading(name, suffix="") {
+    isEnding() {
+        return this.props.end - this.state.now <= 0;
+    }
+
+    heading(name) {
         let timeLeft = this.props.end - this.state.now;
-        return <h3>{name} {this.props.turn} <small>{timeLeft > 0 ? "ends in " + this.formatDuration(timeLeft) + suffix : "ending..."}</small></h3>;
+        return <h3>{name} {this.props.turn} <small>{!this.isEnding() ? "ends in " + this.formatDuration(timeLeft) : "ending..."}</small></h3>;
     }
 }
 
@@ -282,16 +286,16 @@ class Vote extends React.Component {
                                     <option value={candidate} key={candidate}>{candidate}</option>)}
                             </select>
                             : this.props.target === null ? <em>no one</em> : <strong>{this.props.target}</strong>}
-                        {!this.state.editing && isMe
+                        {!this.state.editing && isMe && this.props.canEdit
                             ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                             : null}
                     </div>
 
-                    {this.state.editing
+                    {this.state.editing && this.props.canEdit
                         ? <p className="help-block">Vote for a player to be lynched.</p>
                         : null}
 
-                    {this.state.editing
+                    {this.state.editing && this.props.canEdit
                         ? <p className="form-group">
                             <button type="submit" className="btn btn-primary">Vote</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button>
                         </p>
@@ -376,7 +380,7 @@ class Plan extends React.Component {
                         : null;
                     return <Action key={i}
                                    action={e}
-                                   onSave={this.props.canEditAction(i) ? this.props.onActionSave.bind(this, i) : null}
+                                   onSave={this.props.canEditAction(i) && this.props.onActionSave !== null ? this.props.onActionSave.bind(this, i) : null}
                                    annotation={interpreted !== null ? interpreted.description : null}
                                    buttonCaption={this.props.saveButtonCaption}
                                    buttonClass={this.props.saveButtonClass} />;
@@ -403,7 +407,7 @@ class Day extends Phase {
 
     render() {
         return <div>
-            {this.heading("Day", this.props.hammer ? " or strict majority reached" : "")}
+            {this.heading("Day")}
             {this.props.deaths.length > 0
                 ? this.props.deaths.map(player =>
                     <Death key={player.name} player={player} reason="died" />)
@@ -412,6 +416,7 @@ class Day extends Phase {
                 {Object.keys(this.props.ballot.votes).sort().map((e, i) => {
                     let target = this.props.ballot.votes[e];
                     return <Vote key={e}
+                                 canEdit={!this.isEnding()}
                                  client={this.props.client}
                                  source={e}
                                  target={target}
@@ -422,7 +427,7 @@ class Day extends Phase {
 
             {this.props.plan.length > 0
                 ? <div>
-                    <p>Additionally, the following <strong>instantaneous</strong> actions are available:</p>
+                    <p>Additionally, the following <strong>instantaneous</strong> actions are available, so choose carefully if you want to use one!</p>
                     <Plan plan={this.props.plan}
                           onActionSave={this.onActionSave.bind(this)}
                           canEditAction={(i) => this.props.plan[i].targets === null}
@@ -490,7 +495,7 @@ class Night extends Phase {
             {this.heading("Night")}
             <Plan plan={this.props.plan}
                   canEditAction={(i) => true}
-                  onActionSave={this.onActionSave.bind(this)}
+                  onActionSave={!this.isEnding() ? this.onActionSave.bind(this) : null}
                   messages={[]}
                   saveButtonClass='primary'
                   saveButtonCaption='Plan' />
@@ -836,15 +841,13 @@ class Root extends React.Component {
                              me={this.state.playerState.name}
                              ballot={this.state.phaseState.ballot}
                              deaths={this.state.phaseState.deaths}
-                             messages={this.state.phaseState.messages}
-                             hammer={this.state.publicInfo.rules.indexOf('hammer') !== -1} /> :
+                             messages={this.state.phaseState.messages} /> :
                         <End winners={this.state.phaseState.winners}
                              log={this.state.phaseState.log}
                              players={this.state.phaseState.players}
                              me={this.state.playerState.name} />}
                     {results}
-                    <Start motd={this.state.publicInfo.motd}
-                           rules={this.state.publicInfo.rules} />
+                    <Start motd={this.state.publicInfo.motd} />
                 </div>
 
                 <div className="col-md-2 col-md-pull-10">

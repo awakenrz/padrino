@@ -333,8 +333,7 @@ class Game(object):
     def get_public_info(self):
         return {
             'name': self.meta['name'],
-            'motd': self.meta['motd'],
-            'rules': list(self.meta['rules'])
+            'motd': self.meta['motd']
         }
 
     def get_player_state(self, player_id):
@@ -356,7 +355,9 @@ class Game(object):
     def get_public_state(self):
         return {
             'turn': self.state['turn'],
-            'phaseEnd': self.meta['schedule']['phase_end'],
+            'phaseEnd': self.meta['schedule']['phase_end'] -
+                        (0 if self.state['phase'] == 'Night' else
+                         self.meta['schedule']['twilight_duration']),
             'players': self.get_player_flips()
         }
 
@@ -456,6 +457,11 @@ class Game(object):
     def vote(self, source, target):
         if self.state['phase'] != 'Day':
             raise ValueError('not day time')
+
+        # check for twilight
+        if time.time() > self.meta['schedule']['phase_end'] - \
+                         self.meta['schedule']['twilight_duration']:
+            raise ValueError('in twilight')
 
         return glue.run('vote', self.state_path, self.ballot_path, input={
             'source': source,

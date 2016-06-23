@@ -8,6 +8,7 @@ import random
 import yaml
 
 
+from padrino import game
 from padrino import glue
 
 
@@ -20,7 +21,9 @@ class Ref(object):
 
 class Builder(object):
     def __init__(self, name, motd=None, night_end=datetime.time(10, 0),
-                 day_end=datetime.time(12, 15), tz='Etc/UTC', rules=None):
+                 day_end=datetime.time(12, 15),
+                 twilight_duration=datetime.timedelta(0),
+                 tz='Etc/UTC', rules=None):
         if rules is None:
             rules = set()
 
@@ -41,6 +44,7 @@ class Builder(object):
             'schedule': {
                 'night_end': night_end.isoformat(),
                 'day_end': day_end.isoformat(),
+                'twilight_duration': int(twilight_duration.total_seconds()),
                 'phase_end': None,
                 'tz': tz,
             },
@@ -139,7 +143,7 @@ class Builder(object):
     def build_meta(self, stream=None):
         return yaml.dump(self.meta, stream, default_flow_style=False)
 
-    def write(self, directory):
+    def build(self, directory):
         os.mkdir(directory)
 
         with open(os.path.join(directory, 'state.yml'), 'w') as f:
@@ -147,6 +151,8 @@ class Builder(object):
 
         with open(os.path.join(directory, 'meta.yml'), 'w') as f:
             self.build_meta(f)
+
+        return game.Game(directory)
 
 
 class StateDumper(yaml.SafeDumper):
