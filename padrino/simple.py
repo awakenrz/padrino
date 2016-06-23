@@ -88,6 +88,11 @@ def make_simple(b):
             'See all actions performed on a player at night.',
             type=b.tycon('Voyeur'))
 
+        AUTOPSY = b.declare_action(
+            'autopsy $0',
+            'See all players ever who targeted a dead player.',
+            type=b.tycon('Autopsy'))
+
         VETO = b.declare_action(
             'veto',
             'Stop a lynching from occurring.',
@@ -161,6 +166,9 @@ def make_simple(b):
                          phasesActive={'Night'})]
         VOYEUR = lambda: [
             b.make_grant(Actions.VOYEUR, b.make_action_group(),
+                         phasesActive={'Night'})]
+        FORENSIC_INVESTIGATOR = lambda: [
+            b.make_grant(Actions.AUTOPSY, b.make_action_group(),
                          phasesActive={'Night'})]
 
     Simple.Actions = Actions
