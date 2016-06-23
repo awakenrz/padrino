@@ -428,14 +428,14 @@ class Day extends Phase {
     render() {
         return <div>
             {this.heading("Day", this.props.lynchOnConsensusMet ? 'or on consensus' : '')}
-            <p><strong>Consensus required:</strong> {{
-                MostVotes: 'The player with the most votes will be lynched.',
-                StrictMajority: 'The player who the strict majority of living players are voting for will be lynched.'
-            }[this.props.consensus]}</p>
             {this.props.deaths.length > 0
                 ? this.props.deaths.map(player =>
                     <Death key={player.name} player={player} reason="died" />)
                 : null}
+            <p><strong>Consensus required:</strong> {{
+                MostVotes: 'The player with the most votes will be lynched.',
+                StrictMajority: 'The player who the strict majority of living players are voting for will be lynched.'
+            }[this.props.consensus]}</p>
             <ul>
                 {Object.keys(this.props.ballot.votes).sort().map((e, i) => {
                     let target = this.props.ballot.votes[e];
