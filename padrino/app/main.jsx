@@ -369,7 +369,7 @@ class Will extends React.Component {
             <h4>Will {!this.state.editing ? <small><button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button></small> : null}</h4>
             {!this.state.editing
                 ? this.props.will !== ''
-                    ? <div dangerouslySetInnerHTML={{__html: this.remarkable.render(this.props.will)}}></div>
+                    ? <blockquote dangerouslySetInnerHTML={{__html: this.remarkable.render(this.props.will)}}></blockquote>
                     : <em>You are currently not leaving a will.</em>
                 : <form onSubmit={this.onSubmit.bind(this)}>
                     <fieldset disabled={this.state.waiting}>
@@ -496,10 +496,10 @@ class Death extends React.Component {
                     : <span> No will was found.</span>}
             </p>
             {this.state.showingWill
-                ? <div>
-                    <h4>The last will and testament of {this.props.player.name}</h4>
+                ? <blockquote>
                     <div dangerouslySetInnerHTML={{__html: this.remarkable.render(this.props.player.will)}}></div>
-                </div>
+                    <footer>The last will and testament of <cite>{this.props.player.name}</cite></footer>
+                </blockquote>
                 : null}
         </div>;
     }
