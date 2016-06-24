@@ -37,7 +37,7 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
         self.me_id = None
 
     def open(self):
-        token = self.request.query.encode('utf-8')
+        token = self.get_argument('token')
         try:
             self.me_id = self.game.decode_token(token)
         except ValueError:
@@ -202,7 +202,6 @@ class PeekHandler(tornado.web.RequestHandler):
 
     def get(self):
         token = self.get_argument('token')
-
         if not self.game.check_poke_token(token):
             self.send_error(403)
             return
@@ -230,7 +229,8 @@ class PokeHandler(tornado.web.RequestHandler):
         self.updater = updater
 
     def get(self):
-        if not self.game.check_poke_token(self.request.query.encode('utf-8')):
+        token = self.get_argument('token')
+        if not self.game.check_poke_token(token):
             self.send_error(403)
             return
         self.updater.unschedule_update()
@@ -244,7 +244,8 @@ class RefreshHandler(tornado.web.RequestHandler):
         self.connections = connections
 
     def get(self):
-        if not self.game.check_poke_token(self.request.query.encode('utf-8')):
+        token = self.get_argument('token')
+        if not self.game.check_poke_token(token):
             self.send_error(403)
             return
         for player_id, connections in self.connections.items():

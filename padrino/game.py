@@ -190,8 +190,8 @@ class Game(object):
 
         for message in messages:
             i = None
-            info, origin_censored = self.interpret_message_info(message['info'])
-            if not origin_censored:
+            info = self.interpret_message_info(message['info'])
+            if message['associatesWithAct']:
                 for i, planned in enumerate(raw_plan):
                     if planned['act'] is not None and \
                        message['actTrace'] == planned['act']['trace']:
@@ -291,12 +291,11 @@ class Game(object):
         out = {
             'type': type
         }
-        origin_censored = False
 
         if type == 'Guilt':
             out['isGuilty'] = body['isGuilty']
         elif type == 'Fruit':
-            origin_censored = True
+            pass
         elif type == 'Players':
             out['players'] = [self.meta['players'][player_id]['name']
                               for player_id in body['players']]
@@ -304,7 +303,7 @@ class Game(object):
             out['actions'] = list(set(self.meta['actions'][action_id]['command']
                                       for action_id in body['actions']))
 
-        return out, origin_censored
+        return out
 
     def interpret_raw_plan_view(self, raw):
         return [{
