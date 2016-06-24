@@ -1,0 +1,2 @@
+include padrino/app/bundle.js
+include padrino/templates/*

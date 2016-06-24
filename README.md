@@ -24,6 +24,7 @@
    pip3 install -r requirements.txt
    npm install
    npm run build
+   python3 setup.py develop
    ```
 
 ## Starting a game
