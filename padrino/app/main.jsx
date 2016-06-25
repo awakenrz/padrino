@@ -2,7 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Remarkable from 'remarkable';
 
-const REMARKABLE = new Remarkable('commonmark');
+const REMARKABLE = new Remarkable('commonmark', {
+    html: false
+});
 
 function parseCommand(command) {
     let parts = [];
