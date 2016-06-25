@@ -2,6 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Remarkable from 'remarkable';
 
+const REMARKABLE = new Remarkable('commonmark', {
+    html: false,
+    linkify: true,
+    typographer: true,
+});
+
 function parseCommand(command) {
     let parts = [];
     let groups = 0;
@@ -333,12 +339,6 @@ class Will extends React.Component {
             editing: false,
             waiting: false
         };
-
-        this.remarkable = new Remarkable('full', {
-            html: false,
-            linkify: true,
-            typographer: true,
-        });
     }
 
     startEdit() {
@@ -369,12 +369,13 @@ class Will extends React.Component {
             <h4>Will {!this.state.editing ? <small><button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button></small> : null}</h4>
             {!this.state.editing
                 ? this.props.will !== ''
-                    ? <blockquote dangerouslySetInnerHTML={{__html: this.remarkable.render(this.props.will)}}></blockquote>
+                    ? <blockquote dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.will)}}></blockquote>
                     : <em>You are currently not leaving a will.</em>
                 : <form onSubmit={this.onSubmit.bind(this)}>
                     <fieldset disabled={this.state.waiting}>
                         <div className="form-group">
-                            <textarea autoFocus className="form-control" name="will" defaultValue={this.props.will} rows={5}></textarea>
+                            <textarea autoFocus className="form-control" name="will" defaultValue={this.props.will} rows={5} style={{fontFamily: 'monospace'}}></textarea>
+                            <p className="help-block">You may use <a href="http://commonmark.org/help/" target="markdown-help">Markdown</a> to format your text.</p>
                         </div>
                         <button type="submit" className="btn btn-primary">Submit</button> <button type="button" className="btn btn-default" onClick={this.onCancel.bind(this)}>Cancel</button>
                     </fieldset>
@@ -476,11 +477,6 @@ class Death extends React.Component {
         this.state = {
             showingWill: false
         };
-        this.remarkable = new Remarkable('full', {
-            html: false,
-            linkify: true,
-            typographer: true,
-        });
     }
 
     toggleWill() {
@@ -497,7 +493,7 @@ class Death extends React.Component {
             </p>
             {this.state.showingWill
                 ? <blockquote>
-                    <div dangerouslySetInnerHTML={{__html: this.remarkable.render(this.props.player.will)}}></div>
+                    <div dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.player.will)}}></div>
                     <footer>The last will and testament of <cite>{this.props.player.name}</cite></footer>
                 </blockquote>
                 : null}
@@ -619,19 +615,10 @@ class Profile extends React.Component {
 }
 
 class Start extends React.Component {
-    constructor(props) {
-        super(props);
-        this.remarkable = new Remarkable('full', {
-            html: false,
-            linkify: true,
-            typographer: true,
-        });
-    }
-
     render() {
         return <div>
             <h3>Start</h3>
-            <div dangerouslySetInnerHTML={{__html: this.remarkable.render(this.props.motd)}}></div>
+            <div dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.motd)}}></div>
         </div>;
     }
 }
