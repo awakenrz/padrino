@@ -65,6 +65,11 @@ function interpretInfo(info) {
                 name: 'Fruit',
                 description: 'how... generous?'
             };
+        case 'Role':
+            return {
+                name: 'Role',
+                description: info.role
+            };
     }
 }
 

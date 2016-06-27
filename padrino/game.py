@@ -302,6 +302,8 @@ class Game(object):
         elif type == 'Actions':
             out['actions'] = list(set(self.meta['actions'][action_id]['command']
                                       for action_id in body['actions']))
+        elif type == 'Role':
+            out['role'] = self.meta['players'][player_id]['role']
 
         return out
 
