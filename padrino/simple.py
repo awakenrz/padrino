@@ -28,7 +28,11 @@ def make_simple(b):
         DESPERADO_KILL = b.declare_action(
             'desperado kill $0',
             'Kills a player if they are scum, otherwise kills you.',
-            type=b.tycon('DesperadoKill', killableFactions={Factions.MAFIA}))
+            type=b.tycon('Weak',
+                weakFaction=Factions.TOWN,
+                realActionType=b.tycon('Kill'),
+                weakKillAction=KILL,
+                blocksAction=True))
 
         PROTECT = b.declare_action(
             'protect $0',
