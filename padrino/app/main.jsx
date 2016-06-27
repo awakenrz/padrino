@@ -593,7 +593,7 @@ class Profile extends React.Component {
                             let player = this.props.players[name];
                             return <li key={name}>{player === null
                                 ? name
-                                : <abbr title={player.faction + ' ' + player.role}><del>{name}</del></abbr>}</li>;
+                                : <span><del>{name}</del><br/><small>{player.faction} {player.role}</small></span>}</li>;
                         })}
                         {this.props.traitors > 0
                             ? <li><em>{this.props.traitors} traitor{this.props.traitors !== 1 ? 's' : ''}</em></li>
@@ -608,7 +608,7 @@ class Profile extends React.Component {
                             let player = this.props.players[name];
                             return <li key={name}>{player === null
                                 ? name
-                                : <abbr title={player.faction + ' ' + player.role}><del>{name}</del></abbr>}</li>;
+                                : <span><del>{name}</del><br/><small>{player.faction} {player.role}</small></span>}</li>;
                         })}
                     </ul>
                 </dd>
