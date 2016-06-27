@@ -203,17 +203,14 @@ class Game(object):
 
         return out
 
-    def filter_messages(self, player_id, messages):
-        return [message for message in messages
-                if message['recipient'] == player_id]
-
     def get_messages_view(self, turn, phase, player_id, raw_plan):
         state_path = self.state_path + '.' + phase + '.' + str(turn)
         state_post_path = self.state_path + '.' + phase + '.post.' + str(turn)
 
-        return self.interpret_messages(raw_plan, self.filter_messages(
-            player_id,
-            glue.run('view-messages', state_path, state_post_path)))
+        return self.interpret_messages(
+            raw_plan,
+            glue.run('view-messages', state_path, state_post_path)
+                .get(player_id, []))
 
     def interpret_raw_deaths(self, deaths):
         return [{
@@ -227,9 +224,10 @@ class Game(object):
     def get_current_messages_view(self, player_id, raw_plan):
         state_pre_path = self.state_path + '.night.post.' + \
                          str(self.state['turn'])
-        return self.interpret_messages(raw_plan, self.filter_messages(
-            player_id,
-            glue.run('view-messages', state_pre_path, self.state_path)))
+        return self.interpret_messages(
+            raw_plan,
+            glue.run('view-messages', state_pre_path, self.state_path)
+                .get(player_id, []))
 
     def get_current_deaths_view(self):
         state_pre_path = self.state_path + '.night.post.' + \
@@ -303,7 +301,7 @@ class Game(object):
             out['actions'] = list(set(self.meta['actions'][action_id]['command']
                                       for action_id in body['actions']))
         elif type == 'Role':
-            out['role'] = self.meta['players'][player_id]['role']
+            out['role'] = self.meta['players'][body['player']]['role']
 
         return out
 

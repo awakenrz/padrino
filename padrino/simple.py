@@ -40,6 +40,11 @@ def make_simple(b):
             'Investigates a player to see if they are part of the Mafia.',
             type=b.tycon('Investigate', guiltyFactions={Factions.MAFIA}))
 
+        ROLE_INVESTIGATE = b.declare_action(
+            "investigate $0's role",
+            'Investigates a player to see their role.',
+            type=b.tycon('RoleInvestigate'))
+
         ROLEBLOCK = b.declare_action(
             'roleblock $0',
             'Stops a player from performing their action for one phase.',
@@ -139,6 +144,9 @@ def make_simple(b):
                          phasesActive={'Night'})]
         COP = lambda: [
             b.make_grant(Actions.INVESTIGATE, b.make_action_group(),
+                         phasesActive={'Night'})]
+        ROLE_COP = lambda: [
+            b.make_grant(Actions.ROLE_INVESTIGATE, b.make_action_group(),
                          phasesActive={'Night'})]
         ROLEBLOCKER = lambda: [
             b.make_grant(Actions.ROLEBLOCK, b.make_action_group(),
