@@ -27,6 +27,7 @@
   "dependencies": {
     "react": "^15.1.0",
     "react-dom": "^15.1.0",
+    "react-textarea-autosize": "^4.0.3",
     "remarkable": "^1.6.2"
   }
 }

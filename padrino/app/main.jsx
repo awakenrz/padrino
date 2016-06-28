@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import Textarea from 'react-textarea-autosize';
 import Remarkable from 'remarkable';
 
 const REMARKABLE = new Remarkable('commonmark', {
@@ -377,7 +378,7 @@ class Will extends React.Component {
                 : <form onSubmit={this.onSubmit.bind(this)}>
                     <fieldset disabled={this.state.waiting}>
                         <div className="form-group">
-                            <textarea autoFocus className="form-control" name="will" defaultValue={this.props.will} rows={5} style={{fontFamily: 'monospace'}}></textarea>
+                            <Textarea autoFocus className="form-control" name="will" defaultValue={this.props.will} minRows={3} style={{fontFamily: 'monospace', resize: 'none'}}></Textarea>
                             <p className="help-block">You may use <a href="http://commonmark.org/help/" target="markdown-help">Markdown</a> to format your text.</p>
                         </div>
                         <button type="submit" className="btn btn-primary">Submit</button> <button type="button" className="btn btn-default" onClick={this.onCancel.bind(this)}>Cancel</button>
