@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import CodeMirror from 'react-codemirror';
+import CodeMirror from './react-codemirror.jsx';
 import Remarkable from 'remarkable';
 import {} from 'codemirror/mode/markdown/markdown';
 
@@ -354,7 +354,7 @@ class Will extends React.Component {
         e.preventDefault();
 
         this.setState({waiting: true});
-        this.props.client.request('will', this.refs.will.getCodeMirror().getValue()).then(
+        this.props.client.request('will', this.refs.will.getValue()).then(
             () => this.dismiss(), () => this.dismiss());
     }
 
@@ -382,7 +382,7 @@ class Will extends React.Component {
                     ? <blockquote dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.will)}}></blockquote>
                     : <em>You are currently not leaving a will.</em>
                 : <div className="form-group">
-                    <CodeMirror ref="will" defaultValue={this.props.will} options={{
+                    <CodeMirror ref="will" defaultValue={this.props.will} defaultOptions={{
                         viewportMargin: Infinity,
                         lineNumbers: true,
                         autofocus: true,
