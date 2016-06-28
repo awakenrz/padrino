@@ -168,7 +168,7 @@ class Action extends React.Component {
             <form onSubmit={this.onSubmit.bind(this)}>
                 <fieldset style={{textDecoration: !this.props.action.available ? 'line-through' : ''}} disabled={!this.props.action.available || this.state.waiting}>
                     <div className="form-inline">
-                        {editor} {this.props.action.compulsion === 'Forced'
+                        {editor}{this.props.action.compulsion === 'Forced'
                             ? <em>(forced)</em>
                             : this.props.action.compulsion === 'Required'
                                 ? <em>(compelled)</em>
@@ -178,17 +178,16 @@ class Action extends React.Component {
                         {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onSave !== null
                             ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                             : null}
+
+                        {editMode
+                            ? <span> <button type="submit" className={"btn btn-" + this.props.buttonClass}>{this.props.buttonCaption}</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button></span>
+                            : null}
                     </div>
 
                     {editMode
                         ? <p className="help-block">{this.props.action.description}</p>
                         : null}
 
-                    {editMode
-                        ? <p className="form-group">
-                            <button type="submit" className={"btn btn-" + this.props.buttonClass}>{this.props.buttonCaption}</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button>
-                        </p>
-                        : null}
                 </fieldset>
             </form>
         </li>;
@@ -319,16 +318,14 @@ class Vote extends React.Component {
                         {!this.state.editing && isMe && this.props.canEdit
                             ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                             : null}
+
+                        {this.state.editing && this.props.canEdit
+                            ? <span> <button type="submit" className="btn btn-primary">Vote</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button></span>
+                            : null}
                     </div>
 
                     {this.state.editing && this.props.canEdit
                         ? <p className="help-block">Vote for a player to be lynched.</p>
-                        : null}
-
-                    {this.state.editing && this.props.canEdit
-                        ? <p className="form-group">
-                            <button type="submit" className="btn btn-primary">Vote</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button>
-                        </p>
                         : null}
                 </fieldset>
             </form>
@@ -369,22 +366,22 @@ class Will extends React.Component {
     }
 
     render() {
-        return <div>
-            <h4>Will {!this.state.editing ? <small><button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button></small> : null}</h4>
+        return <form onSubmit={this.onSubmit.bind(this)}><fieldset disabled={this.state.waiting}>
+            <h4>
+                Will
+                {!this.state.editing
+                    ? <small><button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button></small>
+                    : <span> <button type="submit" className="btn btn-primary">Save</button> <button type="button" className="btn btn-default" onClick={this.onCancel.bind(this)}>Cancel</button></span>}
+            </h4>
             {!this.state.editing
                 ? this.props.will !== ''
                     ? <blockquote dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.will)}}></blockquote>
                     : <em>You are currently not leaving a will.</em>
-                : <form onSubmit={this.onSubmit.bind(this)}>
-                    <fieldset disabled={this.state.waiting}>
-                        <div className="form-group">
-                            <Textarea autoFocus className="form-control" name="will" defaultValue={this.props.will} minRows={3} style={{fontFamily: 'monospace', resize: 'none'}}></Textarea>
-                            <p className="help-block">You may use <a href="http://commonmark.org/help/" target="markdown-help">Markdown</a> to format your text.</p>
-                        </div>
-                        <button type="submit" className="btn btn-primary">Submit</button> <button type="button" className="btn btn-default" onClick={this.onCancel.bind(this)}>Cancel</button>
-                    </fieldset>
-                </form>}
-        </div>;
+                : <div className="form-group">
+                    <Textarea autoFocus className="form-control" name="will" defaultValue={this.props.will} minRows={3} style={{fontFamily: 'monospace', resize: 'none'}}></Textarea>
+                    <p className="help-block">You may use <a href="http://commonmark.org/help/" target="markdown-help">Markdown</a> to format your text.</p>
+                </div>}
+        </fieldset></form>;
     }
 }
 
