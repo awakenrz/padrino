@@ -1,7 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Textarea from 'react-textarea-autosize';
+import CodeMirror from 'react-codemirror';
 import Remarkable from 'remarkable';
+import markdown from 'codemirror/mode/markdown/markdown';
+
+console.log(markdown);
 
 const REMARKABLE = new Remarkable('commonmark', {
     html: false
@@ -353,7 +356,7 @@ class Will extends React.Component {
         e.preventDefault();
 
         this.setState({waiting: true});
-        this.props.client.request('will', e.target.elements.will.value).then(
+        this.props.client.request('will', this.refs.will.getCodeMirror().getValue()).then(
             () => this.dismiss(), () => this.dismiss());
     }
 
@@ -381,7 +384,13 @@ class Will extends React.Component {
                     ? <blockquote dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.will)}}></blockquote>
                     : <em>You are currently not leaving a will.</em>
                 : <div className="form-group">
-                    <Textarea autoFocus className="form-control" name="will" defaultValue={this.props.will} minRows={3} style={{fontFamily: 'monospace', resize: 'none'}}></Textarea>
+                    <CodeMirror ref="will" defaultValue={this.props.will} options={{
+                        viewportMargin: Infinity,
+                        lineNumbers: true,
+                        autofocus: true,
+                        mode: 'markdown',
+                        theme: 'default'
+                    }}/>
                     <p className="help-block">You may use <a href="http://commonmark.org/help/" target="markdown-help">Markdown</a> to format your text.</p>
                 </div>}
         </fieldset></form>;
