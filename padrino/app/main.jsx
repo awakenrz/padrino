@@ -168,16 +168,17 @@ class Action extends React.Component {
             <form onSubmit={this.onSubmit.bind(this)}>
                 <fieldset style={{textDecoration: !this.props.action.available ? 'line-through' : ''}} disabled={!this.props.action.available || this.state.waiting}>
                     <div className="form-inline">
-                        {editor}{this.props.action.compulsion === 'Forced'
-                            ? <em>(forced)</em>
-                            : this.props.action.compulsion === 'Required'
-                                ? <em>(compelled)</em>
+                        <div className="form-group">
+                            {editor}{this.props.action.compulsion === 'Forced'
+                                ? <em>(forced)</em>
+                                : this.props.action.compulsion === 'Required'
+                                    ? <em>(compelled)</em>
+                                    : null}
+                            {this.props.annotation ? <span> ⇒ <strong>{this.props.annotation}</strong></span> : null}
+                            {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onSave !== null
+                                ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                                 : null}
-                        {this.props.annotation ? <span> ⇒ <strong>{this.props.annotation}</strong></span> : null}
-
-                        {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onSave !== null
-                            ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
-                            : null}
+                        </div>
 
                         {editMode
                             ? <span> <button type="submit" className={"btn btn-" + this.props.buttonClass}>{this.props.buttonCaption}</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button></span>
@@ -308,16 +309,18 @@ class Vote extends React.Component {
             <form class="form-horizontal" onSubmit={this.onSubmit.bind(this)}>
                 <fieldset disabled={this.state.waiting}>
                     <div className="form-inline">
-                        <strong>{this.props.source}</strong> is voting for {this.state.editing
-                            ? <select className="form-control" defaultValue={this.props.target === null ? "" : this.props.target} name="target">
-                                <option value="">no one</option>
-                                {this.props.candidates.sort().map(candidate =>
-                                    <option value={candidate} key={candidate}>{candidate}</option>)}
-                            </select>
-                            : this.props.target === null ? <em>no one</em> : <strong>{this.props.target}</strong>}
-                        {!this.state.editing && isMe && this.props.canEdit
-                            ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
-                            : null}
+                        <div className="form-group">
+                            <strong>{this.props.source}</strong> is voting for {this.state.editing
+                                ? <select className="form-control" defaultValue={this.props.target === null ? "" : this.props.target} name="target">
+                                    <option value="">no one</option>
+                                    {this.props.candidates.sort().map(candidate =>
+                                        <option value={candidate} key={candidate}>{candidate}</option>)}
+                                </select>
+                                : this.props.target === null ? <em>no one</em> : <strong>{this.props.target}</strong>}
+                            {!this.state.editing && isMe && this.props.canEdit
+                                ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
+                                : null}
+                        </div>
 
                         {this.state.editing && this.props.canEdit
                             ? <span> <button type="submit" className="btn btn-primary">Vote</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button></span>
