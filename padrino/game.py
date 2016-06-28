@@ -67,8 +67,7 @@ class Game(object):
                             if fates[player['faction']]],
                 'players': {
                     self.meta['players'][player_id]['name']: {
-                        'role': self.meta['players'][player_id]['role'],
-                        'faction': self.meta['factions'][player['faction']]['name']
+                        'fullRole': self.get_full_role(player_id),
                     } for player_id, player in self.players.items()
                 },
                 'log': self.get_game_log(),
@@ -214,12 +213,11 @@ class Game(object):
 
     def interpret_raw_deaths(self, deaths):
         return [{
-            'name': self.meta['players'][player]['name'],
-            'role': self.meta['players'][player]['role'],
-            'faction': self.meta['factions'][self.players[player]['faction']]['name'],
+            'name': self.meta['players'][player_id]['name'],
+            'fullRole': self.get_full_role(player_id),
             'lynched': cause == 'Lynched',
-            'will': self.meta['players'][player]['will']
-        } for player, cause in deaths.items()]
+            'will': self.meta['players'][player_id]['will']
+        } for player_id, cause in deaths.items()]
 
     def get_current_messages_view(self, player_id, raw_plan):
         state_pre_path = self.state_path + '.night.post.' + \
@@ -372,6 +370,16 @@ class Game(object):
             'twilightDuration': self.meta['schedule']['twilight_duration']
         }
 
+    def get_full_role(self, player_id):
+        player_meta = self.meta['players'][player_id]
+
+        faction_id = self.players[player_id]['faction']
+        faction_meta = self.meta['factions'][faction_id]
+
+        return faction_meta['translations'].get(
+            player_meta['role'],
+            faction_meta['name'] + ' ' + player_meta['role'])
+
     def get_player_state(self, player_id):
         player_meta = self.meta['players'][player_id]
 
@@ -380,7 +388,7 @@ class Game(object):
 
         return {
             'name': player_meta['name'],
-            'role': player_meta['role'],
+            'fullRole': self.get_full_role(player_id),
             'abilities': player_meta['abilities'],
             'faction': faction_meta['name'],
             'agenda': faction_meta['agenda'],
@@ -398,8 +406,7 @@ class Game(object):
     def get_player_flips(self):
         return {
             self.meta['players'][player_id]['name']: {
-                'role': self.meta['players'][player_id]['role'],
-                'faction': self.meta['factions'][player['faction']]['name']
+                'fullRole': self.get_full_role(player_id)
             } if player['dead'] else None
             for player_id, player in self.players.items()
         }

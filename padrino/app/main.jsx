@@ -497,7 +497,7 @@ class Death extends React.Component {
     render() {
         return <div>
             <p>
-                <strong>{this.props.player.name}</strong> the <strong>{this.props.player.faction} {this.props.player.role}</strong> {this.props.reason}.
+                <strong>{this.props.player.name}</strong> the <strong>{this.props.player.fullRole}</strong> {this.props.reason}.
                 {this.props.player.will !== ''
                     ? <button type="button" onClick={this.toggleWill.bind(this)} className="btn-link" href="#">{this.state.showingWill ? 'Hide will' : 'Show will'}</button>
                     : <span> No will was found.</span>}
@@ -586,7 +586,10 @@ class Profile extends React.Component {
             <h2 style={{textDecoration: this.props.players[this.props.name] === null ? null : 'line-through'}}>{this.props.name}</h2>
             <dl>
                 <dt>Role</dt>
-                <dd>{this.props.faction} {this.props.role}</dd>
+                <dd>{this.props.fullRole}</dd>
+
+                <dt>Faction</dt>
+                <dd>{this.props.faction}</dd>
 
                 <dt>Abilities</dt>
                 <dd>{this.props.abilities}</dd>
@@ -601,7 +604,7 @@ class Profile extends React.Component {
                             let player = this.props.players[name];
                             return <li key={name}>{player === null
                                 ? name
-                                : <span><del>{name}</del><br/><small>{player.faction} {player.role}</small></span>}</li>;
+                                : <span><del>{name}</del><br/><small>{player.fullRole}</small></span>}</li>;
                         })}
                         {this.props.traitors > 0
                             ? <li><em>{this.props.traitors} traitor{this.props.traitors !== 1 ? 's' : ''}</em></li>
@@ -616,7 +619,7 @@ class Profile extends React.Component {
                             let player = this.props.players[name];
                             return <li key={name}>{player === null
                                 ? name
-                                : <span><del>{name}</del><br/><small>{player.faction} {player.role}</small></span>}</li>;
+                                : <span><del>{name}</del><br/><small>{player.fullRole}</small></span>}</li>;
                         })}
                     </ul>
                 </dd>
@@ -669,7 +672,7 @@ class End extends React.Component {
             <ul>
                 {Object.keys(this.props.players).sort().map(name => {
                     let player = this.props.players[name];
-                    return <li key={name}><strong>{name}</strong>: {player.faction} {player.role}</li>;
+                    return <li key={name}><strong>{name}</strong>: {player.fullRole}</li>;
                 })}
             </ul>
             <h4>Action Log <small><button type="button" onClick={this.toggleView.bind(this)} className="btn-link">{this.state.showExecuted
@@ -952,7 +955,7 @@ class Root extends React.Component {
 
                 <div className="col-md-2 col-md-pull-10">
                     <Profile name={this.state.playerState.name}
-                             role={this.state.playerState.role}
+                             fullRole={this.state.playerState.fullRole}
                              abilities={this.state.playerState.abilities}
                              faction={this.state.playerState.faction}
                              agenda={this.state.playerState.agenda}

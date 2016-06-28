@@ -92,13 +92,17 @@ class Builder(object):
         self.state['actions'][ref.token] = ref.traits
         return ref
 
-    def declare_faction(self, name, agenda, **kwargs):
+    def declare_faction(self, name, agenda, translations=None, **kwargs):
+        if translations is None:
+            translations = {}
+
         kwargs.setdefault('winCondition', self.tycon('Primary'))
         kwargs.setdefault('inCahoots', False)
 
         ref = Ref(len(self.meta['factions']), {
             'name': name,
-            'agenda': agenda
+            'agenda': agenda,
+            'translations': translations
         }, kwargs)
         self.meta['factions'][ref.token] = ref.meta
         self.state['factions'][ref.token] = ref.traits

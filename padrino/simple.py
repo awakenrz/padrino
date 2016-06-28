@@ -7,10 +7,14 @@ def make_simple(b):
     class Factions:
         TOWN = b.declare_faction(
             'Town',
-            'Eradicate all members of the mafia.')
+            'Eradicate all members of the mafia.', {
+                'Vanilla': 'Vanilla Townie'
+            })
         MAFIA = b.declare_faction(
             'Mafia',
-            'Eradicate all members of the town.')
+            'Eradicate all members of the town.', {
+                'Vanilla': 'Mafia Goon'
+            })
 
     MAFIA_ACTION_GROUP = b.make_action_group()
 
