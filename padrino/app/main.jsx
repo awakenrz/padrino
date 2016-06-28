@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import CodeMirror from './react-codemirror.jsx';
 import Remarkable from 'remarkable';
+import jwtDecode from 'jwt-decode';
+import querystring from 'querystring';
 import {} from 'codemirror/mode/markdown/markdown';
 
 const REMARKABLE = new Remarkable('commonmark', {
@@ -738,10 +740,12 @@ class Client {
     }
 
     connect() {
-        let token = window.location.search.substring(1);
+        let qs = querystring.parse(window.location.search.substring(1));
+        this.id = jwtDecode(qs.token).t;
+
         this.seqNum = 0;
         this.socket = new WebSocket('ws://' + window.location.host + '/ws?' +
-                                    token);
+                                    querystring.stringify(qs));
 
         this.socket.onopen = () => {
             this.resetBackoff();
@@ -751,6 +755,12 @@ class Client {
         this.socket.onmessage = (e) => {
             let payload = JSON.parse(e.data);
             let body = payload.body;
+
+            if (payload.id !== this.id) {
+                this.onError("Please notify the administrator if you get this error.");
+                this.socket.close();
+                return;
+            }
 
             switch (payload.type) {
                 case 'root':
@@ -785,10 +795,13 @@ class Client {
             }
 
             this.onClose();
-            window.setTimeout(() => {
-                this.connect();
-                this.stepBackoff();
-            }, this.nextReconnect);
+
+            if (!e.wasClean) {
+                window.setTimeout(() => {
+                    this.connect();
+                    this.stepBackoff();
+                }, this.nextReconnect);
+            }
         };
     }
 
