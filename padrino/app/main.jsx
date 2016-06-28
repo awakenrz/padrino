@@ -2,9 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import CodeMirror from 'react-codemirror';
 import Remarkable from 'remarkable';
-import markdown from 'codemirror/mode/markdown/markdown';
-
-console.log(markdown);
+import {} from 'codemirror/mode/markdown/markdown';
 
 const REMARKABLE = new Remarkable('commonmark', {
     html: false
