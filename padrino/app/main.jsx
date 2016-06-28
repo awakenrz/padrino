@@ -169,9 +169,9 @@ class Action extends React.Component {
 
         return <li>
             <form onSubmit={this.onSubmit.bind(this)}>
-                <fieldset style={{textDecoration: !this.props.action.available ? 'line-through' : ''}} disabled={!this.props.action.available || this.state.waiting}>
+                <fieldset disabled={!this.props.action.available || this.state.waiting}>
                     <div className="form-inline">
-                        <div className="form-group">
+                        <div className="form-group" style={{textDecoration: !this.props.action.available ? 'line-through' : ''}}>
                             {editor}{this.props.action.compulsion === 'Forced'
                                 ? <em>(forced)</em>
                                 : this.props.action.compulsion === 'Required'
