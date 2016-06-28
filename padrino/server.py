@@ -56,7 +56,8 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                 'will': self.game.get_will(self.me_id),
                 'nightResults': self.game.get_night_result_views(self.me_id),
                 'dayResults': self.game.get_day_result_views(self.me_id)
-            }
+            },
+            'id': self.me_id
         })
 
     def on_close(self):
@@ -95,9 +96,10 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                     'type': 'root',
                     'body': {
                         'publicState': self.game.get_public_state(),
-                        'playerState': self.game.get_player_state(self.me_id),
+                        'playerState': self.game.get_player_state(player_id),
                         'phaseState': phase_state
-                    }
+                    },
+                    'id': player_id
                 })
 
     def on_plan_message(self, body):
@@ -133,7 +135,8 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                     'type': 'root',
                     'body': {
                         'phaseState': phase_state
-                    }
+                    },
+                    'id': player_id
                 })
 
     def on_vote_message(self, body):
@@ -157,7 +160,8 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                     'type': 'root',
                     'body': {
                         'phaseState': self.game.get_phase_state(player_id)
-                    }
+                    },
+                    'id': player_id
                 })
 
     def on_will_message(self, body):
@@ -167,7 +171,8 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                 'type': 'root',
                 'body': {
                     'will': self.game.get_will(self.me_id)
-                }
+                },
+                'id': self.me_id
             })
 
     def on_message(self, msg):
@@ -192,7 +197,8 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
 
         self.write_message({
             'type': 'ack' if ok else 'rej',
-            'body': payload['seqNum']
+            'body': payload['seqNum'],
+            'id': self.me_id
         })
 
 
@@ -250,7 +256,7 @@ class RefreshHandler(tornado.web.RequestHandler):
             return
         for player_id, connections in self.connections.items():
             for connection in connections:
-                connection.write_message({'type': 'refresh'})
+                connection.write_message({'type': 'refresh', 'id': player_id})
         self.finish('ok')
 
 
@@ -287,7 +293,8 @@ class Updater(object):
                                   if phase == 'Day' else
                                   self.game.get_night_result_view(turn,
                                                                   player_id)
-                    }
+                    },
+                    'id': player_id
                 })
 
         self.schedule_update()

@@ -1,7 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import CodeMirror from 'react-codemirror';
+import CodeMirror from './react-codemirror.jsx';
 import Remarkable from 'remarkable';
+import jwtDecode from 'jwt-decode';
+import querystring from 'querystring';
 import {} from 'codemirror/mode/markdown/markdown';
 
 const REMARKABLE = new Remarkable('commonmark', {
@@ -167,9 +169,9 @@ class Action extends React.Component {
 
         return <li>
             <form onSubmit={this.onSubmit.bind(this)}>
-                <fieldset style={{textDecoration: !this.props.action.available ? 'line-through' : ''}} disabled={!this.props.action.available || this.state.waiting}>
+                <fieldset disabled={!this.props.action.available || this.state.waiting}>
                     <div className="form-inline">
-                        <div className="form-group">
+                        <div className="form-group" style={{textDecoration: !this.props.action.available ? 'line-through' : ''}}>
                             {editor}{this.props.action.compulsion === 'Forced'
                                 ? <em>(forced)</em>
                                 : this.props.action.compulsion === 'Required'
@@ -354,7 +356,7 @@ class Will extends React.Component {
         e.preventDefault();
 
         this.setState({waiting: true});
-        this.props.client.request('will', this.refs.will.getCodeMirror().getValue()).then(
+        this.props.client.request('will', this.refs.will.getValue()).then(
             () => this.dismiss(), () => this.dismiss());
     }
 
@@ -382,7 +384,7 @@ class Will extends React.Component {
                     ? <blockquote dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.will)}}></blockquote>
                     : <em>You are currently not leaving a will.</em>
                 : <div className="form-group">
-                    <CodeMirror ref="will" defaultValue={this.props.will} options={{
+                    <CodeMirror ref="will" defaultValue={this.props.will} defaultOptions={{
                         viewportMargin: Infinity,
                         lineNumbers: true,
                         autofocus: true,
@@ -741,10 +743,12 @@ class Client {
     }
 
     connect() {
-        let token = window.location.search.substring(1);
+        let qs = querystring.parse(window.location.search.substring(1));
+        this.id = jwtDecode(qs.token).t;
+
         this.seqNum = 0;
         this.socket = new WebSocket('ws://' + window.location.host + '/ws?' +
-                                    token);
+                                    querystring.stringify(qs));
 
         this.socket.onopen = () => {
             this.resetBackoff();
@@ -754,6 +758,12 @@ class Client {
         this.socket.onmessage = (e) => {
             let payload = JSON.parse(e.data);
             let body = payload.body;
+
+            if (payload.id !== this.id) {
+                this.onError("Please notify the administrator if you get this error.");
+                this.socket.close();
+                return;
+            }
 
             switch (payload.type) {
                 case 'root':
@@ -788,10 +798,13 @@ class Client {
             }
 
             this.onClose();
-            window.setTimeout(() => {
-                this.connect();
-                this.stepBackoff();
-            }, this.nextReconnect);
+
+            if (!e.wasClean) {
+                window.setTimeout(() => {
+                    this.connect();
+                    this.stepBackoff();
+                }, this.nextReconnect);
+            }
         };
     }
 
