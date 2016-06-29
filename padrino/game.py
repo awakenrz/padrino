@@ -299,8 +299,9 @@ class Game(object):
             out['actions'] = list(set(self.meta['actions'][action_id]['command']
                                       for action_id in body['actions']))
         elif type == 'Role':
-            out['role'] = self.meta['players'][body['player']]['role'] \
-                          if not body['vanillaRole'] else 'Vanilla'
+            player_meta = self.meta['players'][body['player']]
+            out['role'] = player_meta['role'] \
+                          if not player_meta['vanillaized'] else 'Vanilla'
 
         return out
 
@@ -372,7 +373,7 @@ class Game(object):
         }
 
     def get_full_role(self, player_id):
-        if self.players[player_id]['vanilla']:
+        if self.players[player_id]['vanillaized']:
             role = 'Vanilla'
         else:
             role = self.meta['players'][player_id]['role']
