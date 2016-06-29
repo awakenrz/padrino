@@ -372,14 +372,14 @@ class Game(object):
         }
 
     def get_full_role(self, player_id):
-        player_meta = self.meta['players'][player_id]
+        if self.players[player_id]['vanilla']:
+            role = 'Vanilla'
+        else:
+            role = self.meta['players'][player_id]['role']
 
-        faction_id = self.players[player_id]['faction']
-        faction_meta = self.meta['factions'][faction_id]
-
+        faction_meta = self.meta['factions'][self.players[player_id]['faction']]
         return faction_meta['translations'].get(
-            player_meta['role'],
-            faction_meta['name'] + ' ' + player_meta['role'])
+            role, faction_meta['name'] + ' ' + role)
 
     def get_player_state(self, player_id):
         player_meta = self.meta['players'][player_id]
