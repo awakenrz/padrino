@@ -16,8 +16,10 @@ class _DataConstructor(object):
     def __init__(self, tag):
         self.tag = tag
 
-    def __call__(self, **kwargs):
-        return {self.tag: kwargs if kwargs else []}
+    def __call__(self, *args, **kwargs):
+        if args and kwargs:
+            raise ValueError('must specify one of args or kwargs, not both')
+        return {self.tag: kwargs if kwargs else list(args)}
 
 
 class _DataConstructorFactory(object):
@@ -89,11 +91,15 @@ class Builder(object):
         return i
 
     def make_grant(self, action, group, compulsion='Voluntary',
-                   irrevocable=False, *args, **kwargs):
+                   irrevocable=False, constraint=None, *args, **kwargs):
+        if constraint is None:
+            constraint = self.datacons.Unconstrained()
+
         return self.make_effect(
             type=self.datacons.Granted(grantedAction=action, grantedGroup=group,
                                        grantedCompulsion=compulsion,
-                                       grantedIrrevocable=irrevocable),
+                                       grantedIrrevocable=irrevocable,
+                                       grantedConstraint=constraint),
             *args, **kwargs)
 
     def declare_action(self, command, description, **kwargs):
