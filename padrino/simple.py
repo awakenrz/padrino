@@ -100,8 +100,8 @@ def make_simple(b):
             'See all actions performed on a player at night.',
             type=b.datacons.Voyeur())
 
-        AUTOPSY = b.declare_action(
-            'autopsy $0',
+        FORENSIC_INVESTIGATE = b.declare_action(
+            'forensic investigate $0',
             'See all players ever who targeted a dead player.',
             type=b.datacons.Autopsy())
 
@@ -182,7 +182,7 @@ def make_simple(b):
             b.make_grant(Actions.VOYEUR, b.make_action_group(),
                          phasesActive={'Night'})]
         FORENSIC_INVESTIGATOR = lambda: [
-            b.make_grant(Actions.AUTOPSY, b.make_action_group(),
+            b.make_grant(Actions.FORENSIC_INVESTIGATE, b.make_action_group(),
                          phasesActive={'Night'})]
 
     Simple.Actions = Actions
