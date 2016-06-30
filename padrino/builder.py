@@ -19,7 +19,9 @@ class _DataConstructor(object):
     def __call__(self, *args, **kwargs):
         if args and kwargs:
             raise ValueError('must specify one of args or kwargs, not both')
-        return {self.tag: kwargs if kwargs else list(args)}
+
+        return {self.tag: kwargs if kwargs else list(args)
+                                 if len(args) != 1 else args[0]}
 
 
 class _DataConstructorFactory(object):
@@ -76,6 +78,8 @@ class Builder(object):
         self.effect_trace_index = 0
         self.action_group = 0
 
+    record = dict
+
     def make_friends(self, players):
         for player in players:
             for friend in players:
@@ -93,7 +97,7 @@ class Builder(object):
     def make_grant(self, action, group, compulsion='Voluntary',
                    irrevocable=False, constraint=None, *args, **kwargs):
         if constraint is None:
-            constraint = self.datacons.Unconstrained()
+            constraint = self.datacons.Trivial()
 
         return self.make_effect(
             type=self.datacons.Granted(grantedAction=action, grantedGroup=group,
