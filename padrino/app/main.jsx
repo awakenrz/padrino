@@ -518,13 +518,13 @@ class DayResult extends React.Component {
     render() {
         return <div>
             <h3>Day {this.props.turn} <small>ended</small></h3>
+            {this.props.lynched !== null
+                ? <Death player={this.props.lynched} reason="was lynched" />
+                : <p>Nobody was lynched.</p>}
             {this.props.deaths.length > 0
                 ? this.props.deaths.map(player =>
                     <Death key={player.name} player={player} reason="died" />)
                 : null}
-            {this.props.lynched !== null
-                ? <Death player={this.props.lynched} reason="was lynched" />
-                : <p>Nobody was lynched.</p>}
             <ul>
                 {Object.keys(this.props.votes).sort().map((e) => {
                     let target = this.props.votes[e];
@@ -582,6 +582,25 @@ class NightResult extends React.Component {
     }
 }
 
+function onKeys(f) {
+    return (a, b) => {
+        let keysA = f(a);
+        let keysB = f(b);
+
+        for (let i = 0; i < keysA.length; ++i) {
+            if (keysA[i] < keysB[i]) {
+                return -1;
+            }
+
+            if (keysA[i] > keysB[i]) {
+                return 1;
+            }
+        }
+
+        return 0;
+    };
+}
+
 class Profile extends React.Component {
     render() {
         return <div>
@@ -602,7 +621,7 @@ class Profile extends React.Component {
                 <dt>Friends</dt>
                 <dd>
                     {this.props.friends.length > 0 || this.props.traitors > 0 ? <ul>
-                        {this.props.friends.sort().map(name => {
+                        {this.props.friends.sort(onKeys(name => [this.props.players[name] === null ? 0 : 1, name])).map(name => {
                             let player = this.props.players[name];
                             return <li key={name}>{player === null
                                 ? name
@@ -617,7 +636,7 @@ class Profile extends React.Component {
                 <dt>Players</dt>
                 <dd>
                     <ul>
-                        {Object.keys(this.props.players).sort().map(name => {
+                        {Object.keys(this.props.players).sort(onKeys(name => [this.props.players[name] === null ? 0 : 1, name])).map(name => {
                             let player = this.props.players[name];
                             return <li key={name}>{player === null
                                 ? name
