@@ -12,6 +12,19 @@ from padrino import game
 from padrino import glue
 
 
+class _DataConstructor(object):
+    def __init__(self, tag):
+        self.tag = tag
+
+    def __call__(self, **kwargs):
+        return {self.tag: kwargs if kwargs else []}
+
+
+class _DataConstructorFactory(object):
+    def __getattr__(self, tag):
+        return _DataConstructor(tag)
+
+
 class Ref(object):
     def __init__(self, token, meta, traits):
         self.token = token
@@ -56,6 +69,8 @@ class Builder(object):
             'secret': random.getrandbits(256).to_bytes(256 // 8, 'little')
         }
 
+        self.datacons = _DataConstructorFactory()
+
         self.effect_trace_index = 0
         self.action_group = 0
 
@@ -66,7 +81,7 @@ class Builder(object):
                     continue
 
                 player.traits.append(self.make_effect(
-                    type=self.tycon('Friendship', friend=friend)))
+                    type=self.datacons.Friendship(friend=friend)))
 
     def make_action_group(self):
         i = self.action_group
@@ -76,9 +91,9 @@ class Builder(object):
     def make_grant(self, action, group, compulsion='Voluntary',
                    irrevocable=False, *args, **kwargs):
         return self.make_effect(
-            type=self.tycon('Granted', grantedAction=action, grantedGroup=group,
-                            grantedCompulsion=compulsion,
-                            grantedIrrevocable=irrevocable),
+            type=self.datacons.Granted(grantedAction=action, grantedGroup=group,
+                                       grantedCompulsion=compulsion,
+                                       grantedIrrevocable=irrevocable),
             *args, **kwargs)
 
     def declare_action(self, command, description, **kwargs):
@@ -96,7 +111,7 @@ class Builder(object):
         if translations is None:
             translations = {}
 
-        kwargs.setdefault('winCondition', self.tycon('Primary'))
+        kwargs.setdefault('winCondition', self.datacons.Primary())
         kwargs.setdefault('inCahoots', False)
 
         ref = Ref(len(self.meta['factions']), {
@@ -131,18 +146,15 @@ class Builder(object):
             'turnsLeft': turnsLeft,
             'phasesActive': phasesActive,
             'uses': uses,
-            'trace': self.tycon('EffectFromStart',
-                                index=self.effect_trace_index)
+            'trace': self.datacons.EffectFromStart(
+                index=self.effect_trace_index)
         }
         self.effect_trace_index += 1
         return effect
 
-    @staticmethod
-    def tycon(tag, **kwargs):
-        return {tag: kwargs if kwargs else []}
-
     def build_state(self, stream=None):
-        return yaml.dump(self.state, stream, Dumper=StateDumper)
+        return yaml.dump(self.state, stream, Dumper=StateDumper,
+                         default_flow_style=False)
 
     def build_meta(self, stream=None):
         return yaml.dump(self.meta, stream, default_flow_style=False)

@@ -2,7 +2,7 @@ def make_simple(b):
     KILL = b.declare_action(
         'kill $0',
         'Kills a player.',
-        type=b.tycon('Kill'))
+        type=b.datacons.Kill())
 
     class Factions:
         TOWN = b.declare_faction(
@@ -22,119 +22,117 @@ def make_simple(b):
         FRUIT_VEND = b.declare_action(
             'vend fruit to $0',
             'Give a player a piece of fruit.',
-            type=b.tycon('FruitVend'))
+            type=b.datacons.FruitVend())
 
         STRONGMAN_KILL = b.declare_action(
             'strongman kill $0',
             'Kills a player, ignoring protection.',
-            type=b.tycon('StrongmanKill'))
+            type=b.datacons.StrongmanKill())
 
         DESPERADO_KILL = b.declare_action(
             'desperado kill $0',
             'Kills a player if they are scum, otherwise kills you.',
-            type=b.tycon('Weak',
-                weakFaction=Factions.TOWN,
-                realActionType=b.tycon('Kill'),
-                weakKillAction=KILL,
-                blocksAction=True))
+            type=b.datacons.Weak(weakFaction=Factions.TOWN,
+                                 realActionType=b.datacons.Kill(),
+                                 weakKillAction=KILL,
+                                 blocksAction=True))
 
         PROTECT = b.declare_action(
             'protect $0',
             'Protects another player from kills for one phase.',
-            type=b.tycon('Protect'))
+            type=b.datacons.Protect())
 
         INVESTIGATE = b.declare_action(
             'investigate $0',
             'Investigates a player to see if they are part of the Mafia.',
-            type=b.tycon('Investigate', guiltyFactions={Factions.MAFIA}))
+            type=b.datacons.Investigate(guiltyFactions={Factions.MAFIA}))
 
         ROLE_INVESTIGATE = b.declare_action(
             "investigate $0's role",
             'Investigates a player to see their role.',
-            type=b.tycon('RoleInvestigate'))
+            type=b.datacons.RoleInvestigate())
 
         ROLEBLOCK = b.declare_action(
             'roleblock $0',
             'Stops a player from performing their action for one phase.',
-            type=b.tycon('Roleblock'))
+            type=b.datacons.Roleblock())
 
         DRIVE = b.declare_action(
             'drive $0 with $1',
             'Make all actions targeting one player target another, and vice '
             'versa, for one phase.',
-            type=b.tycon('Drive'))
+            type=b.datacons.Drive())
 
         REDIRECT = b.declare_action(
             'redirect $0 to $1',
             'Make all actions that a player performs target another player for '
             'one phase.',
-            type=b.tycon('Redirect'))
+            type=b.datacons.Redirect())
 
         DEFLECT = b.declare_action(
             'deflect $0 to $1',
             'Make all actions targeting a player target another player for one '
             'phase.',
-            type=b.tycon('Deflect'))
+            type=b.datacons.Deflect())
 
         FRAME = b.declare_action(
             'frame $0',
             'Frame someone as being part of the Mafia for one phase.',
-            type=b.tycon('Frame', framedFaction=Factions.MAFIA))
+            type=b.datacons.Frame(framedFaction=Factions.MAFIA))
 
         WATCH = b.declare_action(
             'watch $0',
             'See all players who visited a player at night.',
-            type=b.tycon('Watch'))
+            type=b.datacons.Watch())
 
         TRACK = b.declare_action(
             'track $0',
             'See all players who a player visited at night.',
-            type=b.tycon('Track'))
+            type=b.datacons.Track())
 
         FOLLOW = b.declare_action(
             'follow $0',
             'See all actions a player performed at night.',
-            type=b.tycon('Follow'))
+            type=b.datacons.Follow())
 
         VOYEUR = b.declare_action(
             'voyeur $0',
             'See all actions performed on a player at night.',
-            type=b.tycon('Voyeur'))
+            type=b.datacons.Voyeur())
 
         AUTOPSY = b.declare_action(
             'autopsy $0',
             'See all players ever who targeted a dead player.',
-            type=b.tycon('Autopsy'))
+            type=b.datacons.Autopsy())
 
         VETO = b.declare_action(
             'veto',
             'Stop a lynching from occurring.',
-            type=b.tycon('Veto'))
+            type=b.datacons.Veto())
 
         SUICIDE = b.declare_action(
             'commit suicide',
             'Commit suicide.',
-            type=b.tycon('Suicide'))
+            type=b.datacons.Suicide())
 
         STEAL_VOTE = b.declare_action(
             'steal vote from $0',
             'Steal a vote from another player.',
-            type=b.tycon('StealVote'))
+            type=b.datacons.StealVote())
 
     Actions.KILL = KILL
 
     class Simple:
         TOWN = lambda: [b.make_effect(
-            type=b.tycon('Recruited', recruitedFaction=Factions.TOWN))]
+            type=b.datacons.Recruited(recruitedFaction=Factions.TOWN))]
         MAFIA = lambda: [
-            b.make_effect(type=b.tycon('Recruited',
-                                       recruitedFaction=Factions.MAFIA)),
+            b.make_effect(
+                type=b.datacons.Recruited(recruitedFaction=Factions.MAFIA)),
             b.make_grant(Actions.KILL, MAFIA_ACTION_GROUP,
                          phasesActive={'Night'})]
 
         GODFATHER = lambda: [
-            b.make_effect(type=b.tycon('Framed',
-                                       framedFaction=Factions.TOWN))]
+            b.make_effect(type=b.datacons.Framed(framedFaction=Factions.TOWN))]
         STRONGMAN = lambda: [
             b.make_grant(Actions.STRONGMAN_KILL, MAFIA_ACTION_GROUP,
                          phasesActive={'Night'})]
