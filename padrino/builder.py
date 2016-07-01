@@ -12,6 +12,20 @@ from padrino import game
 from padrino import glue
 
 
+class Expr(object):
+    def __init__(self, body):
+        self.body = body
+
+    def __and__(self, rhs):
+        return Expr({'And': [self.body, rhs.body]})
+
+    def __or__(self, rhs):
+        return Expr({'Or': [self.body, rhs.body]})
+
+    def __invert__(self):
+        return Expr({'Not': self.body})
+
+
 class _DataConstructor(object):
     def __init__(self, tag):
         self.tag = tag
@@ -80,6 +94,9 @@ class Builder(object):
 
     record = dict
 
+    def atom(self, body):
+        return Expr({'Atom': body})
+
     def make_friends(self, players):
         for player in players:
             for friend in players:
@@ -95,15 +112,11 @@ class Builder(object):
         return i
 
     def make_grant(self, action, group, compulsion='Voluntary',
-                   irrevocable=False, constraint=None, *args, **kwargs):
-        if constraint is None:
-            constraint = self.datacons.Trivial()
-
+                   irrevocable=False, *args, **kwargs):
         return self.make_effect(
             type=self.datacons.Granted(grantedAction=action, grantedGroup=group,
                                        grantedCompulsion=compulsion,
-                                       grantedIrrevocable=irrevocable,
-                                       grantedConstraint=constraint),
+                                       grantedIrrevocable=irrevocable),
             *args, **kwargs)
 
     def declare_action(self, command, description, **kwargs):
@@ -147,15 +160,14 @@ class Builder(object):
         self.state['players'][ref.token] = ref.traits
         return ref
 
-    def make_effect(self, type, turnsLeft=None, phasesActive=None, uses=None):
-        if phasesActive is None:
-            phasesActive = {'Night', 'Day'}
+    def make_effect(self, type, uses=None, constraint=None):
+        if constraint is None:
+            constraint = self.datacons.Trivial()
 
         effect = {
             'type': type,
-            'turnsLeft': turnsLeft,
-            'phasesActive': phasesActive,
             'uses': uses,
+            'constraint': constraint,
             'trace': self.datacons.EffectFromStart(
                 index=self.effect_trace_index)
         }
@@ -194,3 +206,8 @@ def set_representer(dumper, data):
 @functools.partial(StateDumper.add_representer, Ref)
 def ref_representer(dumper, data):
     return dumper.represent_scalar('tag:yaml.org,2002:int', str(data.token))
+
+
+@functools.partial(StateDumper.add_representer, Expr)
+def set_representer(dumper, data):
+    return dumper.represent_dict(data.body)

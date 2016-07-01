@@ -129,61 +129,61 @@ def make_simple(b):
             b.make_effect(
                 type=b.datacons.Recruited(recruitedFaction=Factions.MAFIA)),
             b.make_grant(Actions.KILL, MAFIA_ACTION_GROUP,
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
 
         GODFATHER = lambda: [
             b.make_effect(type=b.datacons.Framed(framedFaction=Factions.TOWN))]
         STRONGMAN = lambda: [
             b.make_grant(Actions.STRONGMAN_KILL, MAFIA_ACTION_GROUP,
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         DESPERADO = lambda: [
             b.make_grant(Actions.DESPERADO_KILL, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         FRUIT_VENDOR = lambda: [
             b.make_grant(Actions.FRUIT_VEND, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         DOCTOR = lambda: [
             b.make_grant(Actions.PROTECT, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         VIGILANTE = lambda: [
             b.make_grant(Actions.KILL, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         COP = lambda: [
             b.make_grant(Actions.INVESTIGATE, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         ROLE_COP = lambda: [
             b.make_grant(Actions.ROLE_INVESTIGATE, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         ROLEBLOCKER = lambda: [
             b.make_grant(Actions.ROLEBLOCK, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         BUS_DRIVER = lambda: [
             b.make_grant(Actions.DRIVE, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         REDIRECTOR = lambda: [
             b.make_grant(Actions.REDIRECT, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         DEFLECTOR = lambda: [
             b.make_grant(Actions.DEFLECT, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         FRAMER = lambda: [
             b.make_grant(Actions.FRAME, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         WATCHER = lambda: [
             b.make_grant(Actions.WATCH, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         TRACKER = lambda: [
             b.make_grant(Actions.TRACK, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         FOLLOWER = lambda: [
             b.make_grant(Actions.FOLLOW, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         VOYEUR = lambda: [
             b.make_grant(Actions.VOYEUR, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
         FORENSIC_INVESTIGATOR = lambda: [
             b.make_grant(Actions.FORENSIC_INVESTIGATE, b.make_action_group(),
-                         phasesActive={'Night'})]
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
 
     Simple.Actions = Actions
     Simple.Factions = Factions
