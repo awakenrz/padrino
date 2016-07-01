@@ -1,4 +1,5 @@
 import datetime
+import functools
 import logging
 import os
 import jwt
@@ -240,6 +241,7 @@ class Game(object):
         return self.interpret_raw_deaths(glue.run('view-deaths', state_path,
                                                   state_post_path))
 
+    @functools.lru_cache()
     def get_night_result_view(self, turn, player_id):
         raw = self.filter_raw_plan_view(player_id,
                                         self.get_raw_plan_view(turn, 'night'))
@@ -250,6 +252,7 @@ class Game(object):
             'plan': self.interpret_raw_plan_view(raw)
         }
 
+    @functools.lru_cache()
     def get_day_result_view(self, turn, player_id):
         raw = self.filter_raw_plan_view(player_id,
                                         self.get_raw_plan_view(turn, 'day'))
