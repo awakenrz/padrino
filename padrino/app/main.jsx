@@ -47,29 +47,29 @@ function parseCommand(command) {
 
 function interpretInfo(info) {
     switch (info.type) {
-        case 'Guilt':
+        case 'GuiltInfo':
             return {
                 name: 'Guilt',
                 description: info.isGuilty
                     ? 'guilty'
                     : 'not guilty'
             };
-        case 'Players':
+        case 'PlayersInfo':
             return {
                 name: 'Players',
                 description: info.players.join(', ') || 'no players'
             };
-        case 'Actions':
+        case 'ActionsInfo':
             return {
                 name: 'Actions',
                 description: info.actions.map(command => command.replace(/\$\d+/g, 'someone')).join(', ') || 'no actions'
             };
-        case 'Fruit':
+        case 'FruitInfo':
             return {
                 name: 'Fruit',
                 description: 'how... generous?'
             };
-        case 'Role':
+        case 'RoleInfo':
             return {
                 name: 'Role',
                 description: info.role

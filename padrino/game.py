@@ -288,17 +288,17 @@ class Game(object):
             'type': type
         }
 
-        if type == 'Guilt':
+        if type == 'GuiltInfo':
             out['isGuilty'] = body['isGuilty']
-        elif type == 'Fruit':
+        elif type == 'FruitInfo':
             pass
-        elif type == 'Players':
+        elif type == 'PlayersInfo':
             out['players'] = [self.meta['players'][player_id]['name']
                               for player_id in body['players']]
-        elif type == 'Actions':
+        elif type == 'ActionsInfo':
             out['actions'] = list(set(self.meta['actions'][action_id]['command']
                                       for action_id in body['actions']))
-        elif type == 'Role':
+        elif type == 'RoleInfo':
             out['role'] = self.meta['players'][body['player']]['role'] \
                           if not self.players[body['player']]['vanillaized'] \
                           else 'Vanilla'

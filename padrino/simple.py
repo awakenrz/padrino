@@ -103,7 +103,7 @@ def make_simple(b):
         FORENSIC_INVESTIGATE = b.declare_action(
             'forensic investigate $0',
             'See all players ever who targeted a dead player.',
-            type=b.datacons.Autopsy())
+            type=b.datacons.ForensicInvestigate())
 
         VETO = b.declare_action(
             'veto',
