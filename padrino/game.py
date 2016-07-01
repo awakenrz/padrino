@@ -49,7 +49,7 @@ class Game(object):
         return all(fate is not None for fate in self.get_raw_fates().values())
 
     def set_will_for(self, player_id, will):
-        if self.players[player_id]['dead']:
+        if self.players[player_id]['causeOfDeath'] is not None:
             raise ValueError('player is dead, cannot set will anymore')
         self.meta['players'][player_id]['will'] = will
         self.save_meta()
@@ -333,9 +333,11 @@ class Game(object):
 
     def get_ballot(self, turn):
         raw = self.get_raw_ballot(turn)
-        players = glue.run('view-players', self.state_path + '.day.' + str(turn))
+        players = glue.run('view-players',
+                           self.state_path + '.day.post.' + str(turn))
         candidates = [player_id for player_id, player in players.items()
-                      if not player['dead']]
+                      if player['causeOfDeath'] is None or
+                         player['causeOfDeath'] == 'Lynched']
 
         return {
             'votes': {
@@ -354,7 +356,7 @@ class Game(object):
     def get_current_ballot(self):
         raw = self.get_current_raw_ballot()
         candidates = [player_id for player_id, player in self.players.items()
-                      if not player['dead']]
+                      if player['causeOfDeath'] is None]
 
         return {
             'votes': {
@@ -412,7 +414,7 @@ class Game(object):
         return {
             self.meta['players'][player_id]['name']: {
                 'fullRole': self.get_full_role(player_id)
-            } if player['dead'] else None
+            } if player['causeOfDeath'] is not None else None
             for player_id, player in self.players.items()
         }
 
