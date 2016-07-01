@@ -131,6 +131,7 @@ class Game(object):
             })
         return log
 
+    @functools.lru_cache()
     def get_final_plan_view(self, turn, phase):
         return [{
             'command': self.meta['actions'][info['action']]['command'],
@@ -158,7 +159,7 @@ class Game(object):
             planned.append({
                 'turn': self.state['turn'],
                 'phase': 'Night',
-                'acts': self.get_final_plan_view(turn, 'night')
+                'acts': self.get_final_plan_view(self.state['turn'], 'night')
             })
         return planned
 
