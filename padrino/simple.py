@@ -39,6 +39,12 @@ def make_simple(b):
             'Protects another player from kills for one phase.',
             type=b.datacons.Protect())
 
+        BODYGUARD = b.declare_action(
+            'bodyguard $0',
+            'Bodyguards another player from one kill for one phase. If they '
+            'are attacked, you will take the hit instead, but only once.',
+            type=b.datacons.Bodyguard())
+
         INVESTIGATE = b.declare_action(
             'investigate $0',
             'Investigates a player to see if they are part of the Mafia.',
@@ -121,10 +127,14 @@ def make_simple(b):
 
     class Simple:
         TOWN = lambda: [b.make_effect(
-            type=b.datacons.Recruited(recruitedFaction=Factions.TOWN))]
+            type=b.datacons.Recruited(recruitedFaction=Factions.TOWN,
+                                      knowsFactionMembers=False,
+                                      traitor=False))]
         MAFIA = lambda: [
             b.make_effect(
-                type=b.datacons.Recruited(recruitedFaction=Factions.MAFIA)),
+                type=b.datacons.Recruited(recruitedFaction=Factions.MAFIA,
+                                          knowsFactionMembers=True,
+                                          traitor=False)),
             b.make_grant(Actions.KILL, MAFIA_ACTION_GROUP,
                          constraint=b.atom(b.datacons.DuringPhase('Night')))]
 
@@ -141,6 +151,9 @@ def make_simple(b):
                          constraint=b.atom(b.datacons.DuringPhase('Night')))]
         DOCTOR = lambda: [
             b.make_grant(Actions.PROTECT, b.make_action_group(),
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
+        BODYGUARD = lambda: [
+            b.make_grant(Actions.BODYGUARD, b.make_action_group(),
                          constraint=b.atom(b.datacons.DuringPhase('Night')))]
         VIGILANTE = lambda: [
             b.make_grant(Actions.KILL, b.make_action_group(),

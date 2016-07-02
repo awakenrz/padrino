@@ -620,16 +620,29 @@ class Profile extends React.Component {
 
                 <dt>Friends</dt>
                 <dd>
-                    {this.props.friends.length > 0 || this.props.traitors > 0 ? <ul>
+                    {this.props.friends.length > 0 ? <ul>
                         {this.props.friends.sort(onKeys(name => [this.props.players[name] === null ? 0 : 1, name])).map(name => {
                             let player = this.props.players[name];
                             return <li key={name}>{player === null
                                 ? name
                                 : <span><del>{name}</del><br/><small>{player.fullRole}</small></span>}</li>;
                         })}
-                        {this.props.traitors > 0
-                            ? <li><em>{this.props.traitors} traitor{this.props.traitors !== 1 ? 's' : ''}</em></li>
-                            : null}
+                    </ul> : 'none'}
+                </dd>
+
+                <dt>Cohorts</dt>
+                <dd>
+                    {this.props.cohorts.length > 0 ? <ul>
+                        {this.props.cohorts.sort(onKeys(name => [name === null || this.props.players[name] === null ? 0 : 1, name])).map((name, i) => {
+                            if (name === null) {
+                                return <li key={i}><em>someone</em></li>;
+                            } else {
+                                let player = this.props.players[name];
+                                return <li key={name}>{player === null
+                                    ? name
+                                    : <span><del>{name}</del><br/><small>{player.fullRole}</small></span>}</li>;
+                            }
+                        })}
                     </ul> : 'none'}
                 </dd>
 
@@ -992,7 +1005,7 @@ class Root extends React.Component {
                              faction={this.state.playerState.faction}
                              agenda={this.state.playerState.agenda}
                              friends={this.state.playerState.friends}
-                             traitors={this.state.playerState.traitors}
+                             cohorts={this.state.playerState.cohorts}
                              players={this.state.publicState.players} />
                 </div>
             </div>

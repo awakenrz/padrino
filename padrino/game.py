@@ -402,7 +402,9 @@ class Game(object):
             'agenda': faction_meta['agenda'],
             'friends': [self.meta['players'][friend]['name']
                         for friend in self.players[player_id]['friends']],
-            'traitors': self.players[player_id]['traitors']
+            'cohorts': [self.meta['players'][cohort]['name'] if cohort is not None
+                                                             else None
+                        for cohort in self.players[player_id]['cohorts']]
         }
 
     def get_public_state(self):
