@@ -306,6 +306,8 @@ class Game(object):
             out['role'] = self.meta['players'][body['player']]['role'] \
                           if not self.players[body['player']]['vanillaized'] \
                           else 'Vanilla'
+        elif type == 'GreetingInfo':
+            out['greeter'] = self.meta['players'][body['greeter']]['name']
 
         return out
 
