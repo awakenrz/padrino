@@ -308,6 +308,8 @@ class Game(object):
                           else 'Vanilla'
         elif type == 'GreetingInfo':
             out['greeter'] = self.meta['players'][body['greeter']]['name']
+            out['faction'] = \
+                self.meta['factions'][body['greeterFaction']]['name']
 
         return out
 

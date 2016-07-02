@@ -77,7 +77,7 @@ function interpretInfo(info) {
         case 'GreetingInfo':
             return {
                 name: 'Greeting',
-                description: info.greeter + ' says howdy!'
+                description: <span><strong>{info.greeter}</strong> says howdy from the <strong>{info.faction}</strong> faction!</span>
             }
     }
 }
@@ -182,7 +182,7 @@ class Action extends React.Component {
                                 : this.props.action.compulsion === 'Required'
                                     ? <em>(compelled)</em>
                                     : null}
-                            {this.props.annotation ? <span> ⇒ <strong>{this.props.annotation}</strong></span> : null}
+                            {this.props.annotation ? <span> ⇒ {this.props.annotation}</span> : null}
                             {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onSave !== null
                                 ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                                 : null}
@@ -435,7 +435,7 @@ class Plan extends React.Component {
                     <p>You also received:</p>
                     <ul>{extra.map((e, i) => {
                         let interpreted = interpretInfo(e);
-                        return <li key={i}>{interpreted.name}: {interpreted.description}</li>;
+                        return <li key={i}><strong>{interpreted.name}:</strong> {interpreted.description}</li>;
                     })}</ul>
                 </div>
                 : null}
