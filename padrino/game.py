@@ -131,7 +131,7 @@ class Game(object):
             })
         return log
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=None)
     def get_final_plan_view(self, turn, phase):
         return [{
             'command': self.meta['actions'][info['action']]['command'],
@@ -242,7 +242,7 @@ class Game(object):
         return self.interpret_raw_deaths(glue.run('view-deaths', state_path,
                                                   state_post_path))
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=None)
     def get_night_result_view(self, turn, player_id):
         raw = self.filter_raw_plan_view(player_id,
                                         self.get_raw_plan_view(turn, 'night'))
@@ -253,7 +253,7 @@ class Game(object):
             'plan': self.interpret_raw_plan_view(raw)
         }
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=None)
     def get_day_result_view(self, turn, player_id):
         raw = self.filter_raw_plan_view(player_id,
                                         self.get_raw_plan_view(turn, 'day'))
