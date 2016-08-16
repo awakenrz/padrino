@@ -559,12 +559,18 @@ class Night extends Phase {
     render() {
         return <div>
             {this.heading("Night")}
-            <Plan plan={this.props.plan}
-                  canEditAction={(i) => true}
-                  onActionSave={!this.isPrimaryEnding() ? this.onActionSave.bind(this) : null}
-                  messages={[]}
-                  saveButtonClass='primary'
-                  saveButtonCaption='Plan' />
+
+            {this.props.plan.length > 0
+                ? <div>
+                    <p>The following actions are available:</p>
+                    <Plan plan={this.props.plan}
+                          canEditAction={(i) => true}
+                          onActionSave={!this.isPrimaryEnding() ? this.onActionSave.bind(this) : null}
+                          messages={[]}
+                          saveButtonClass='primary'
+                          saveButtonCaption='Plan' />
+                </div>
+                : null}
             {!this.props.dead ? <Will client={this.props.client} will={this.props.will} /> : null}
         </div>;
     }
@@ -579,10 +585,15 @@ class NightResult extends React.Component {
                     <Death key={player.name} player={player} reason="was found dead" />)
                 : <p>Nobody died.</p>}
 
-            <Plan plan={this.props.plan}
-                  canEditAction={(i) => false}
-                  onActionSave={null}
-                  messages={this.props.messages} />
+            {this.props.plan.length > 0
+                ? <div>
+                    <p>The following actions were available:</p>
+                    <Plan plan={this.props.plan}
+                          canEditAction={(i) => false}
+                          onActionSave={null}
+                          messages={this.props.messages} />
+                </div>
+                : null}
         </div>;
     }
 }
