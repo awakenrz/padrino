@@ -1097,6 +1097,7 @@ class Root extends React.Component {
                              me={this.state.playerState.name} />}
                     <hr />
                     {intersperse(results, i => <hr key={'sep' + i} />)}
+                    <hr />
                     <Start motd={this.state.publicInfo.motd} />
                 </div>
 
