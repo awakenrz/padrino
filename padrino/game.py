@@ -389,11 +389,17 @@ class Game(object):
 
     def get_ballot(self, turn):
         raw = self.get_raw_ballot(turn)
+
+        orig_players = glue.run('view-players',
+                                self.state_path + '.day.' + str(turn))
         players = glue.run('view-players',
                            self.state_path + '.day.post.' + str(turn))
-        candidates = [player_id for player_id, player in players.items()
+
+        candidates = {player_id for player_id, player in orig_players.items()
+                      if player['causeOfDeath'] is None} & \
+                     {player_id for player_id, player in players.items()
                       if player['causeOfDeath'] is None or
-                         player['causeOfDeath'] == 'Lynched']
+                         player['causeOfDeath'] == 'Lynched'}
 
         return {
             'votes': {
