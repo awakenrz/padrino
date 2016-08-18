@@ -100,36 +100,20 @@ class Game(object):
                 'plan': self.interpret_raw_plan_view(raw_plan)
             }
 
-    def get_game_log(self):
-        log = []
-
-        history = {
+    @functools.lru_cache(maxsize=None)
+    def get_game_history(self):
+        return {
             turn: {
-                phase: [self.interpret_log_act(act) for act in acts]
+                phase: [{
+                    'command': self.meta['actions'][act['action']]['command'],
+                    'source': self.meta['players'][act['source']]['name'],
+                    'targets': [self.meta['players'][target]['name']
+                                for target in act['targets']],
+                    'trace': act['trace'],
+                } for act in acts]
                 for phase, acts in phases.items()
             } for turn, phases in glue.run('view-history',
-                                           self.state_path).items()
-        }
-
-        for turn in range(1, self.state['turn']):
-            turn_history = history.get(turn, {})
-            log.append({
-                'turn': turn,
-                'phase': 'Night',
-                'acts': turn_history.get('Night', [])
-            })
-            log.append({
-                'turn': turn,
-                'phase': 'Day',
-                'acts': turn_history.get('Day', [])
-            })
-        if self.state['phase'] == 'Day':
-            log.append({
-                'turn': self.state['turn'],
-                'phase': 'Night',
-                'acts': history.get(self.state['turn'], {}).get('Night', [])
-            })
-        return log
+                                           self.state_path).items()}
 
     @functools.lru_cache(maxsize=None)
     def get_final_plan_view(self, turn, phase):
@@ -138,38 +122,105 @@ class Game(object):
             'source': self.meta['players'][info['act']['source']]['name'],
             'targets': None if info['act'] is None else [
                 self.meta['players'][target]['name']
-                for target in info['act']['targets']]
+                for target in info['act']['targets']],
+            'trace': info['act']['trace'],
         } for info in self.get_raw_plan_view(turn, phase)
           if info['act'] is not None]
 
     def get_game_planned(self):
-        planned = []
-        for turn in range(1, self.state['turn']):
-            planned.append({
-                'turn': turn,
-                'phase': 'Night',
-                'acts': self.get_final_plan_view(turn, 'night')
-            })
-            planned.append({
-                'turn': turn,
-                'phase': 'Day',
-                'acts': self.get_final_plan_view(turn, 'day')
-            })
+        planned = {
+            turn: {
+                'Day': self.get_final_plan_view(turn, 'day'),
+                'Night': self.get_final_plan_view(turn, 'night')
+            } for turn in range(1, self.state['turn'])}
         if self.state['phase'] == 'Day':
-            planned.append({
-                'turn': self.state['turn'],
-                'phase': 'Night',
-                'acts': self.get_final_plan_view(self.state['turn'], 'night')
-            })
+            planned[self.state['turn']] = {
+                'Night': self.get_final_plan_view(self.state['turn'], 'night')
+            }
         return planned
 
-    def interpret_log_act(self, act):
-        return {
-            'source': self.meta['players'][act['source']]['name'],
-            'targets': [self.meta['players'][target]['name']
-                        for target in act['targets']],
-            'command': self.meta['actions'][act['action']]['command']
+    @functools.lru_cache(maxsize=None)
+    def get_game_log(self):
+        # Fill game log with initial actions from the plan.
+        log = {
+            turn: {
+                phase: {act['trace']['ActFromPlan']['planGroup']: {
+                    'planned': {
+                        'command': act['command'],
+                        'source': act['source'],
+                        'targets': act['targets'],
+                    },
+                    'final': None,
+                    'triggers': {}
+                } for act in acts}
+                for phase, acts in phases.items()
+            } for turn, phases in self.get_game_planned().items()
         }
+
+        # Try to reconcile acts actually executed with the plan. There are
+        # three scenarios here for planned acts:
+        #
+        # - the action was executed as planned: we clear the planned field and
+        #   only set the final field.
+        #
+        # - the action was blocked: we won't encounter the entry in the history
+        #   here, so only the planned field will be set.
+        #
+        # - the action was rewritten: both the planned field and final field
+        #   will be set, but with different values.
+        #
+        # Additionally, we may have acts triggered by rewrite. These are
+        # placed into the triggers field and they are always regarded as
+        # executed, so only the final field will be set for these acts.
+        for turn, phases in self.get_game_history().items():
+            for phase, acts in phases.items():
+                root = log[turn][phase]
+
+                for act in acts:
+                    trace_type = next(iter(act['trace'].keys()))
+
+                    final = {
+                        'command': act['command'],
+                        'source': act['source'],
+                        'targets': act['targets'],
+                    }
+
+                    if trace_type == 'ActFromPlan':
+                        trace = act['trace']['ActFromPlan']
+                        node = root[trace['planGroup']]
+                        node['final'] = final
+
+                        if node['planned'] == node['final']:
+                            node['planned'] = None
+                    elif trace_type == 'ActFromRewrite':
+                        trace = act['trace']['ActFromRewrite']
+                        trigger_path = []
+
+                        node = root
+
+                        while True:
+                            trigger_path.append(trace['index'])
+
+                            trace = trace['dependentTrace']
+                            trace_type = next(iter(trace.keys()))
+
+                            if trace_type == 'ActFromPlan':
+                                node = root[trace['ActFromPlan']['planGroup']]
+                                break
+
+                        while trigger_path:
+                            node = node['triggers'].setdefault(
+                                trigger_path.pop(), {
+                                    'planned': None,
+                                    'final': None,
+                                    'triggers': {}
+                                })
+                        node['final'] = final
+                    else:
+                        raise ValueError('unknown trace type: {}'.format(
+                            trace_type))
+
+        return log
 
     def get_night_result_views(self, player_id):
         results = []

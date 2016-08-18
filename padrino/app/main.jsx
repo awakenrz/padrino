@@ -687,25 +687,44 @@ class Start extends React.Component {
     }
 }
 
-class End extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {showExecuted: false};
-    }
+class LogEntry extends React.Component {
+    present(act) {
+        return <span><strong>{act.source}</strong>: {parseCommand(act.command).parts.map((part, i) => {
+            switch (part.type) {
+                case "text":
+                    return <span key={i}>{part.text}</span>;
 
-    toggleView() {
-        this.setState({showExecuted: !this.state.showExecuted});
+                case "group":
+                    return <span key={i}><strong>{act.targets[part.group]}</strong></span>;
+            }
+        })}</span>;
     }
 
     render() {
-        let view = this.state.showExecuted
-            ? this.props.log
-            : this.props.planned;
+        let triggerKeys = Object.keys(this.props.entry.triggers).sort();
 
+        return <li><div>{this.props.entry.final !== null
+            ? this.props.entry.planned === null
+                ? this.present(this.props.entry.final)
+                : <div>
+                    <div><del>{this.present(this.props.entry.planned)}</del> (rewritten)</div>
+                    <div>{this.present(this.props.entry.final)}</div>
+                </div>
+            : <div><del>{this.present(this.props.entry.planned)}</del> (blocked)</div>
+        }</div>{triggerKeys.length > 0
+            ? <ul>
+                {triggerKeys.map(key => <LogEntry key={key} entry={this.props.entry.triggers[key]} />)}
+            </ul>
+            : null}</li>;
+    }
+}
+
+class End extends React.Component {
+    render() {
         return <div>
             <h3>End</h3>
             <p>{this.props.winners.indexOf(this.props.me) !== -1
-                ? 'Congratulations!'
+                ? 'Congratulations, you won!'
                 : 'Better luck next time!'}
             </p>
 
@@ -725,44 +744,31 @@ class End extends React.Component {
                     return <li key={name}><strong>{name}</strong>: {player.fullRole}</li>;
                 })}
             </ul>
-            <h4>Action Log <small><button type="button" onClick={this.toggleView.bind(this)} className="btn-link">{this.state.showExecuted
-                    ? 'Switch to planned view'
-                    : 'Switch to executed view'}</button></small></h4>
 
-            {this.state.showExecuted
-                ? <p>
-                    <strong>Executed view:</strong>{' '}
-                    These are the actions that occured at night with their
-                    actual targets. Note that they may not be the actions
-                    originally planned by each player (or even planned at all),
-                    not in order of actual execution (bus drives may appear
-                    after bus driven actions, for instance), and some may be
-                    missing (if they were blocked). However, all actions present
-                    are guaranteed to be executed.
-                </p>
-                : <p>
-                    <strong>Planned view:</strong>{' '}
-                    These are the actions that were planned by players, as-is.
-                    Note that they do not take into account actions that were
-                    blocked or otherwise altered, and are not in any specific
-                    order.
-                </p>}
+            <h4>Action Log</h4>
+            <p>
+                This is the log of all actions performed during the game. The
+                ordering of actions is not significant – actions that are not
+                struck out are guaranteed to have been performed.
+            </p>
 
-            {view.map((e, i) => <div key={i}>
-                <h5>{e.phase} {e.turn}</h5>
-                <ul>{e.acts.length > 0 ? e.acts.map((e, i) => {
-                    return <li key={i}><strong>{e.source}</strong>: {parseCommand(e.command).parts.map((part, i) => {
-                        switch (part.type) {
-                            case "text":
-                                return <span key={i}>{part.text}</span>;
+            {Object.keys(this.props.log).sort().map(turn => ['Night', 'Day'].map(phase => {
+                let phases = this.props.log[turn];
 
-                            case "group":
-                                return <span key={i}><strong>{e.targets[part.group]}</strong></span>;
-                        }
-                    })}</li>;
-                }) : <li><em>No actions for this phase.</em></li>}
-                </ul>
-            </div>)}
+                if (!Object.prototype.hasOwnProperty.call(phases, phase)) {
+                    return;
+                }
+
+                let entries = phases[phase];
+                let entryKeys = Object.keys(entries).sort();
+
+                return <div key={phase + turn}>
+                    <h5>{phase} {turn}</h5>
+                    {entryKeys.length > 0
+                        ? <ul>{entryKeys.map(key => <LogEntry key={key} entry={entries[key]} />)}</ul>
+                        : <div><em>Nothing happened.</em></div>}
+                </div>;
+            }))}
         </div>;
     }
 }
