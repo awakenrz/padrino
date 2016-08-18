@@ -135,7 +135,6 @@ class Builder(object):
             translations = {}
 
         kwargs.setdefault('winCondition', self.datacons.Primary())
-        kwargs.setdefault('inCahoots', False)
 
         ref = Ref(len(self.meta['factions']), {
             'name': name,
