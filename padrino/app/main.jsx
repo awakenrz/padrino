@@ -479,6 +479,13 @@ class Votes extends React.Component {
         });
 
         return <div>
+            <p><strong>Consensus criteria:</strong> {{
+                MostVotes: <span>The player with the most votes will be lynched.</span>,
+                StrictMajority: <span>The player for whom the strict majority of votes are for will be lynched ({Math.floor(voters.length / 2 + 1)} required).</span>
+            }[this.props.consensus]}</p>
+
+            <p>Votes cast:</p>
+
             {Object.keys(voted).sort((a, b) => {
                 let r = voted[b].length - voted[a].length;
                 if (r !== 0) {
@@ -493,7 +500,7 @@ class Votes extends React.Component {
                 }
 
                 return <div key={e}>
-                    <h5>{e} <span className="badge">{votes.length}</span></h5>
+                    <h5>against <strong>{e}</strong> <span className="badge">{votes.length}</span></h5>
                     <ul>
                         {votes.length > 0
                             ? votes.map(voter => <li key={voter}><strong>{voter}</strong></li>)
@@ -503,7 +510,7 @@ class Votes extends React.Component {
             })}
 
             <div>
-                <h5><em>Abstentions</em> <span className="badge">{abstentions.length}</span></h5>
+                <h5><em>Abstentions</em></h5>
                 <ul>
                     {abstentions.length > 0
                         ? abstentions.map(voter => <li key={voter}><strong>{voter}</strong></li>)
@@ -512,7 +519,7 @@ class Votes extends React.Component {
             </div>
 
             <div>
-                No votes for: {intersperse(noVotes.map(voter => <span key={voter}><strong>{voter}</strong></span>), ", ")}
+                No votes cast for: {intersperse(noVotes.map(voter => <span key={voter}><strong>{voter}</strong></span>), ", ")}
             </div>
         </div>;
     }
@@ -530,10 +537,6 @@ class Day extends Phase {
                 ? this.props.deaths.map(player =>
                     <Death key={player.name} player={player} reason="died" />)
                 : null}
-            <p><strong>Consensus criteria:</strong> {{
-                MostVotes: <span>The player with the most votes will be lynched.</span>,
-                StrictMajority: <span>The player for whom the strict majority of votes are for will be lynched (<span className="badge">{Math.floor(Object.keys(this.props.ballot.votes).length / 2 + 1)}</span> required).</span>
-            }[this.props.consensus]}</p>
 
             {this.props.plan.length > 0
                 ? <div>
@@ -555,8 +558,8 @@ class Day extends Phase {
                         client={this.props.client} />
                 : null}
 
-            <p>The following players have votes cast for them:</p>
-            <Votes votes={this.props.ballot.votes} />
+            <Votes votes={this.props.ballot.votes}
+                   consensus={this.props.consensus} />
 
             {!this.props.dead ? <Will client={this.props.client} will={this.props.will} /> : null}
         </div>;
@@ -617,8 +620,8 @@ class DayResult extends React.Component {
                 : null}
 
             <h4>Voting</h4>
-            <p>The following players had votes cast for them:</p>
-            <Votes votes={this.props.votes} />
+            <Votes votes={this.props.votes}
+                   consensus={this.props.consensus} />
         </div>;
     }
 }
@@ -1033,7 +1036,8 @@ class Root extends React.Component {
                                         deaths={result.deaths}
                                         messages={result.messages}
                                         lynched={result.lynched}
-                                        votes={result.ballot.votes} />);
+                                        votes={result.ballot.votes}
+                                        consensus={this.state.publicInfo.consensus} />);
             }
 
             if (i <= this.state.nightResults.length) {
