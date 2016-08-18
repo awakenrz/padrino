@@ -7,7 +7,8 @@ import querystring from 'querystring';
 import {} from 'codemirror/mode/markdown/markdown';
 
 const REMARKABLE = new Remarkable('commonmark', {
-    html: false
+    html: false,
+    breaks: true
 });
 
 function parseCommand(command) {
@@ -1096,8 +1097,10 @@ class Root extends React.Component {
                              players={this.state.phaseState.players}
                              me={this.state.playerState.name} />}
                     <hr />
-                    {intersperse(results, i => <hr key={'sep' + i} />)}
-                    <hr />
+                    {results.map((result, i) => <div key={i}>
+                        {result}
+                        <hr />
+                    </div>)}
                     <Start motd={this.state.publicInfo.motd} />
                 </div>
 
