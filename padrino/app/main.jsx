@@ -318,13 +318,15 @@ class Vote extends React.Component {
                 <fieldset disabled={this.state.waiting}>
                     <div className="form-inline">
                         <div className="form-group">
-                            <strong>{this.props.source}</strong> is voting for {this.state.editing
-                                ? <select className="form-control" defaultValue={this.props.target === null ? "" : this.props.target} name="target">
+                            <strong>{this.props.source}</strong>{this.state.editing
+                                ? <span>: vote for <select className="form-control" defaultValue={this.props.target === null ? "" : this.props.target} name="target">
                                     <option value="">no one</option>
                                     {this.props.candidates.sort().map(candidate =>
                                         <option value={candidate} key={candidate}>{candidate}</option>)}
-                                </select>
-                                : this.props.target === null ? <em>no one</em> : <strong>{this.props.target}</strong>}
+                                </select></span>
+                                : this.props.target === null
+                                    ? <span> is abstaining</span>
+                                    : <span> is voting for <strong>{this.props.target}</strong></span>}
                             {!this.state.editing && isMe && this.props.canEdit
                                 ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                                 : null}
@@ -533,7 +535,7 @@ class DayResult extends React.Component {
             <ul>
                 {Object.keys(this.props.votes).sort().map((e) => {
                     let target = this.props.votes[e];
-                    return <li key={e}><strong>{e}</strong> voted for {target === null ? <em>no one</em> : <strong>{target}</strong>}</li>;
+                    return <li key={e}><strong>{e}</strong>{target === null ? <span> abstained</span> : <span> voted for <strong>{target}</strong></span>}</li>;
                 })}
             </ul>
 
