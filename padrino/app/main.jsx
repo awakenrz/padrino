@@ -519,7 +519,7 @@ class Votes extends React.Component {
             </div>
 
             <div>
-                No votes cast for: {intersperse(noVotes.map(voter => <span key={voter}><strong>{voter}</strong></span>), ", ")}
+                No votes cast against: {intersperse(noVotes.map(voter => <span key={voter}><strong>{voter}</strong></span>), ", ")}
             </div>
         </div>;
     }
