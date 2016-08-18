@@ -400,9 +400,7 @@ class Game(object):
                 self.meta['players'][player_id]['name']:
                     self.meta['players'][raw[player_id]]['name']
                     if player_id in raw else None
-                for player_id in candidates},
-            'candidates': [self.meta['players'][player_id]['name']
-                           for player_id in candidates]
+                for player_id in candidates}
         }
 
     def get_current_raw_ballot(self):

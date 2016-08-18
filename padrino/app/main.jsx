@@ -318,11 +318,11 @@ class Vote extends React.Component {
                         <label htmlFor="vote-target"><strong>Your vote:</strong></label> {this.state.editing
                             ? <select className="form-control" defaultValue={this.props.target === null ? "" : this.props.target} name="target" id="vote-target">
                                 <option value="">no one</option>
-                                {this.props.candidates.sort().map(candidate =>
+                                {this.props.candidates.map(candidate =>
                                     <option value={candidate} key={candidate}>{candidate}</option>)}
                             </select>
                             : this.props.target === null
-                                ? <span><em>abstaining</em></span>
+                                ? <span><em>abstain</em></span>
                                 : <span><strong>{this.props.target}</strong></span>}
                         {!this.state.editing && this.props.canEdit
                             ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
@@ -441,13 +441,13 @@ class Plan extends React.Component {
     }
 }
 
-function intersperse(arr, sep) {
+function intersperse(arr, sepf) {
     if (arr.length === 0) {
         return [];
     }
 
     return arr.slice(1).reduce(function(xs, x, i) {
-        return xs.concat([sep, x]);
+        return xs.concat([sepf(i), x]);
     }, [arr[0]]);
 }
 
@@ -479,6 +479,14 @@ class Votes extends React.Component {
         });
 
         return <div>
+            <h4>Voting</h4>
+            {Object.prototype.hasOwnProperty.call(this.props.votes, this.props.me)
+                ? <Vote canEdit={this.props.canEdit}
+                        target={this.props.votes[this.props.me]}
+                        candidates={voters}
+                        client={this.props.client} />
+                : null}
+
             <p><strong>Consensus criteria:</strong> {{
                 MostVotes: <span>The player with the most votes will be lynched.</span>,
                 StrictMajority: <span>The player for whom the strict majority of votes are for will be lynched ({Math.floor(voters.length / 2 + 1)} required).</span>
@@ -486,13 +494,7 @@ class Votes extends React.Component {
 
             <p>Votes cast:</p>
 
-            {Object.keys(voted).sort((a, b) => {
-                let r = voted[b].length - voted[a].length;
-                if (r !== 0) {
-                    return r;
-                }
-                return a.localeCompare(b);
-            }).map(e => {
+            {Object.keys(voted).sort(onKeys(name => [-voted[name].length, name])).map(e => {
                 let votes = voted[e];
 
                 if (votes.length === 0) {
@@ -519,7 +521,7 @@ class Votes extends React.Component {
             </div>
 
             <div>
-                No votes cast against: {intersperse(noVotes.map(voter => <span key={voter}><strong>{voter}</strong></span>), ", ")}
+                No votes cast against: {intersperse(noVotes.map(voter => <span key={voter}><strong>{voter}</strong></span>), () => ", ")}
             </div>
         </div>;
     }
@@ -540,7 +542,8 @@ class Day extends Phase {
 
             {this.props.plan.length > 0
                 ? <div>
-                    <p>Additionally, the following <strong>instantaneous</strong> actions are available, so choose carefully if you want to use one!</p>
+                    <h4>Actions</h4>
+                    <p>The following <strong>instantaneous</strong> actions are available, so choose carefully if you want to use one!</p>
                     <Plan plan={this.props.plan}
                           onActionSave={!this.isTwilightEnding() ? this.onActionSave.bind(this) : null}
                           canEditAction={(i) => this.props.plan[i].targets === null}
@@ -550,16 +553,11 @@ class Day extends Phase {
                 </div>
                 : null}
 
-            <h4>Voting</h4>
-            {Object.prototype.hasOwnProperty.call(this.props.ballot.votes, this.props.me)
-                ? <Vote canEdit={!this.isPrimaryEnding()}
-                        target={this.props.ballot.votes[this.props.me]}
-                        candidates={this.props.ballot.candidates}
-                        client={this.props.client} />
-                : null}
-
             <Votes votes={this.props.ballot.votes}
-                   consensus={this.props.consensus} />
+                   consensus={this.props.consensus}
+                   canEdit={!this.isPrimaryEnding()}
+                   me={this.props.me}
+                   client={this.props.client} />
 
             {!this.props.dead ? <Will client={this.props.client} will={this.props.will} /> : null}
         </div>;
@@ -610,8 +608,8 @@ class DayResult extends React.Component {
 
             {this.props.plan.length > 0
                 ? <div>
-                    <p>Additionally, the following <strong>instantaneous</strong> actions were available:</p>
-
+                    <h4>Actions</h4>
+                    <p>The following <strong>instantaneous</strong> actions were available:</p>
                     <Plan plan={this.props.plan}
                           canEditAction={(i) => false}
                           onActionSave={null}
@@ -619,9 +617,11 @@ class DayResult extends React.Component {
                 </div>
                 : null}
 
-            <h4>Voting</h4>
             <Votes votes={this.props.votes}
-                   consensus={this.props.consensus} />
+                   consensus={this.props.consensus}
+                   canEdit={false}
+                   me={this.props.me}
+                   client={null} />
         </div>;
     }
 }
@@ -637,6 +637,7 @@ class Night extends Phase {
 
             {this.props.plan.length > 0
                 ? <div>
+                    <h4>Actions</h4>
                     <p>The following actions are available:</p>
                     <Plan plan={this.props.plan}
                           canEditAction={(i) => true}
@@ -662,6 +663,7 @@ class NightResult extends React.Component {
 
             {this.props.plan.length > 0
                 ? <div>
+                    <h4>Actions</h4>
                     <p>The following actions were available:</p>
                     <Plan plan={this.props.plan}
                           canEditAction={(i) => false}
@@ -1037,7 +1039,8 @@ class Root extends React.Component {
                                         messages={result.messages}
                                         lynched={result.lynched}
                                         votes={result.ballot.votes}
-                                        consensus={this.state.publicInfo.consensus} />);
+                                        consensus={this.state.publicInfo.consensus}
+                                        me={this.state.playerState.name} />);
             }
 
             if (i <= this.state.nightResults.length) {
@@ -1092,7 +1095,8 @@ class Root extends React.Component {
                              planned={this.state.phaseState.planned}
                              players={this.state.phaseState.players}
                              me={this.state.playerState.name} />}
-                    {results}
+                    <hr />
+                    {intersperse(results, i => <hr key={'sep' + i} />)}
                     <Start motd={this.state.publicInfo.motd} />
                 </div>
 
