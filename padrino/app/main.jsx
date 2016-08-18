@@ -311,38 +311,34 @@ class Vote extends React.Component {
     }
 
     render() {
-        let isMe = this.props.me === this.props.source;
-
-        return <li key={this.props.source}>
-            <form class="form-horizontal" onSubmit={this.onSubmit.bind(this)}>
-                <fieldset disabled={this.state.waiting}>
-                    <div className="form-inline">
-                        <div className="form-group">
-                            <strong>{this.props.source}</strong>{this.state.editing
-                                ? <span>: vote for <select className="form-control" defaultValue={this.props.target === null ? "" : this.props.target} name="target">
-                                    <option value="">no one</option>
-                                    {this.props.candidates.sort().map(candidate =>
-                                        <option value={candidate} key={candidate}>{candidate}</option>)}
-                                </select></span>
-                                : this.props.target === null
-                                    ? <span> is abstaining</span>
-                                    : <span> is voting for <strong>{this.props.target}</strong></span>}
-                            {!this.state.editing && isMe && this.props.canEdit
-                                ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
-                                : null}
-                        </div>
-
-                        {this.state.editing && this.props.canEdit
-                            ? <span> <button type="submit" className="btn btn-primary">Vote</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button></span>
+        return <form onSubmit={this.onSubmit.bind(this)}>
+            <fieldset disabled={this.state.waiting}>
+                <div className="form-inline">
+                    <div className="form-group">
+                        <label htmlFor="vote-target"><strong>Your vote:</strong></label> {this.state.editing
+                            ? <select className="form-control" defaultValue={this.props.target === null ? "" : this.props.target} name="target" id="vote-target">
+                                <option value="">no one</option>
+                                {this.props.candidates.sort().map(candidate =>
+                                    <option value={candidate} key={candidate}>{candidate}</option>)}
+                            </select>
+                            : this.props.target === null
+                                ? <span><em>abstaining</em></span>
+                                : <span><strong>{this.props.target}</strong></span>}
+                        {!this.state.editing && this.props.canEdit
+                            ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
                             : null}
                     </div>
 
                     {this.state.editing && this.props.canEdit
-                        ? <p className="help-block">Vote for a player to be lynched.</p>
+                        ? <span> <button type="submit" className="btn btn-primary">Vote</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button></span>
                         : null}
-                </fieldset>
-            </form>
-        </li>;
+                </div>
+
+                {this.state.editing && this.props.canEdit
+                    ? <p className="help-block">Vote for a player to be lynched.</p>
+                    : null}
+            </fieldset>
+        </form>;
     }
 }
 
@@ -445,6 +441,58 @@ class Plan extends React.Component {
     }
 }
 
+class Votes extends React.Component {
+    render() {
+        let voted = {};
+        let abstentions = [];
+
+        let votes = Object.keys(this.props.votes).sort();
+
+        votes.forEach(voter => {
+            voted[voter] = [];
+        });
+
+        votes.forEach(voter => {
+            let votee = this.props.votes[voter];
+            if (votee === null) {
+                abstentions.push(voter);
+            } else {
+                voted[votee].push(voter);
+            }
+        });
+
+        return <div>
+            {Object.keys(voted).sort((a, b) => {
+                let r = voted[b].length - voted[a].length;
+                if (r !== 0) {
+                    return r;
+                }
+                return a.localeCompare(b);
+            }).map(e => {
+                let votes = voted[e];
+
+                return <div key={e}>
+                    <h5>{e}</h5>
+                    <ul>
+                        {votes.length > 0
+                            ? votes.map(voter => <li key={voter}><strong>{voter}</strong></li>)
+                            : <li><em>no votes</em></li>}
+                    </ul>
+                </div>;
+            })}
+
+            <div>
+                <h5><em>Abstentions</em></h5>
+                <ul>
+                    {abstentions.length > 0
+                        ? abstentions.map(voter => <li key={voter}><strong>{voter}</strong></li>)
+                        : <li><em>no abstentions</em></li>}
+                </ul>
+            </div>
+        </div>;
+    }
+}
+
 class Day extends Phase {
     onActionSave(i, targets) {
         return this.props.client.request('impulse', {i: i, targets: targets});
@@ -461,18 +509,6 @@ class Day extends Phase {
                 MostVotes: 'The player with the most votes will be lynched.',
                 StrictMajority: 'The player for whom the strict majority of votes are for will be lynched.'
             }[this.props.consensus]}</p>
-            <ul>
-                {Object.keys(this.props.ballot.votes).sort().map((e, i) => {
-                    let target = this.props.ballot.votes[e];
-                    return <Vote key={e}
-                                 canEdit={!this.isPrimaryEnding()}
-                                 client={this.props.client}
-                                 source={e}
-                                 target={target}
-                                 me={this.props.me}
-                                 candidates={this.props.ballot.candidates} />
-                })}
-            </ul>
 
             {this.props.plan.length > 0
                 ? <div>
@@ -485,6 +521,17 @@ class Day extends Phase {
                           saveButtonCaption='Perform' />
                 </div>
                 : null}
+
+            <h4>Votes</h4>
+            {Object.prototype.hasOwnProperty.call(this.props.ballot.votes, this.props.me)
+                ? <Vote canEdit={!this.isPrimaryEnding()}
+                        target={this.props.ballot.votes[this.props.me]}
+                        candidates={this.props.ballot.candidates}
+                        client={this.props.client} />
+                : null}
+
+            <p>The following players have votes cast for them:</p>
+            <Votes votes={this.props.ballot.votes} />
 
             {!this.props.dead ? <Will client={this.props.client} will={this.props.will} /> : null}
         </div>;
@@ -532,12 +579,6 @@ class DayResult extends React.Component {
                 ? this.props.deaths.map(player =>
                     <Death key={player.name} player={player} reason="died" />)
                 : null}
-            <ul>
-                {Object.keys(this.props.votes).sort().map((e) => {
-                    let target = this.props.votes[e];
-                    return <li key={e}><strong>{e}</strong>{target === null ? <span> abstained</span> : <span> voted for <strong>{target}</strong></span>}</li>;
-                })}
-            </ul>
 
             {this.props.plan.length > 0
                 ? <div>
@@ -549,6 +590,10 @@ class DayResult extends React.Component {
                           messages={this.props.messages} />
                 </div>
                 : null}
+
+            <h4>Votes</h4>
+            <p>The following players had votes cast for them:</p>
+            <Votes votes={this.props.votes} />
         </div>;
     }
 }
