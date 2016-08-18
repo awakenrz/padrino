@@ -441,23 +441,40 @@ class Plan extends React.Component {
     }
 }
 
+function intersperse(arr, sep) {
+    if (arr.length === 0) {
+        return [];
+    }
+
+    return arr.slice(1).reduce(function(xs, x, i) {
+        return xs.concat([sep, x]);
+    }, [arr[0]]);
+}
+
 class Votes extends React.Component {
     render() {
         let voted = {};
         let abstentions = [];
+        let noVotes = [];
 
-        let votes = Object.keys(this.props.votes).sort();
+        let voters = Object.keys(this.props.votes).sort();
 
-        votes.forEach(voter => {
+        voters.forEach(voter => {
             voted[voter] = [];
         });
 
-        votes.forEach(voter => {
+        voters.forEach(voter => {
             let votee = this.props.votes[voter];
             if (votee === null) {
                 abstentions.push(voter);
             } else {
                 voted[votee].push(voter);
+            }
+        });
+
+        voters.forEach(voter => {
+            if (voted[voter].length === 0) {
+                noVotes.push(voter);
             }
         });
 
@@ -470,6 +487,10 @@ class Votes extends React.Component {
                 return a.localeCompare(b);
             }).map(e => {
                 let votes = voted[e];
+
+                if (votes.length === 0) {
+                    return null;
+                }
 
                 return <div key={e}>
                     <h5>{e}</h5>
@@ -488,6 +509,10 @@ class Votes extends React.Component {
                         ? abstentions.map(voter => <li key={voter}><strong>{voter}</strong></li>)
                         : <li><em>no abstentions</em></li>}
                 </ul>
+            </div>
+
+            <div>
+                No votes were for: {intersperse(noVotes.map(voter => <span key={voter}><strong>{voter}</strong></span>), ", ")}
             </div>
         </div>;
     }
