@@ -493,7 +493,7 @@ class Votes extends React.Component {
                 }
 
                 return <div key={e}>
-                    <h5>{e}</h5>
+                    <h5>{e} <span className="badge">{votes.length}</span></h5>
                     <ul>
                         {votes.length > 0
                             ? votes.map(voter => <li key={voter}><strong>{voter}</strong></li>)
@@ -503,7 +503,7 @@ class Votes extends React.Component {
             })}
 
             <div>
-                <h5><em>Abstentions</em></h5>
+                <h5><em>Abstentions</em> <span className="badge">{abstentions.length}</span></h5>
                 <ul>
                     {abstentions.length > 0
                         ? abstentions.map(voter => <li key={voter}><strong>{voter}</strong></li>)
@@ -530,9 +530,9 @@ class Day extends Phase {
                 ? this.props.deaths.map(player =>
                     <Death key={player.name} player={player} reason="died" />)
                 : null}
-            <p><strong>Consensus required:</strong> {{
-                MostVotes: 'The player with the most votes will be lynched.',
-                StrictMajority: 'The player for whom the strict majority of votes are for will be lynched.'
+            <p><strong>Consensus criteria:</strong> {{
+                MostVotes: <span>The player with the most votes will be lynched.</span>,
+                StrictMajority: <span>The player for whom the strict majority of votes are for will be lynched (<span className="badge">{Math.floor(Object.keys(this.props.ballot.votes).length / 2 + 1)}</span> required).</span>
             }[this.props.consensus]}</p>
 
             {this.props.plan.length > 0
@@ -547,7 +547,7 @@ class Day extends Phase {
                 </div>
                 : null}
 
-            <h4>Votes</h4>
+            <h4>Voting</h4>
             {Object.prototype.hasOwnProperty.call(this.props.ballot.votes, this.props.me)
                 ? <Vote canEdit={!this.isPrimaryEnding()}
                         target={this.props.ballot.votes[this.props.me]}
@@ -616,7 +616,7 @@ class DayResult extends React.Component {
                 </div>
                 : null}
 
-            <h4>Votes</h4>
+            <h4>Voting</h4>
             <p>The following players had votes cast for them:</p>
             <Votes votes={this.props.votes} />
         </div>;
