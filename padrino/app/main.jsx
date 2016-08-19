@@ -93,7 +93,8 @@ class Action extends React.Component {
         };
     }
 
-    startEdit() {
+    startEdit(e) {
+        e.preventDefault();
         this.setState({editing: true});
     }
 
@@ -185,7 +186,7 @@ class Action extends React.Component {
                                     : null}
                             {this.props.annotation ? <span> ⇒ {this.props.annotation}</span> : null}
                             {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onSave !== null
-                                ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
+                                ? <span> <a href="#" className="glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></a></span>
                                 : null}
                         </div>
 
@@ -283,7 +284,8 @@ class Vote extends React.Component {
         };
     }
 
-    startEdit() {
+    startEdit(e) {
+        e.preventDefault();
         this.setState({editing: true});
     }
 
@@ -326,7 +328,7 @@ class Vote extends React.Component {
                                 ? <span><em>abstain</em></span>
                                 : <span><strong>{this.props.target}</strong></span>}
                         {!this.state.editing && this.props.canEdit
-                            ? <button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button>
+                            ? <span> <a href="#" className="glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></a></span>
                             : null}
                     </div>
 
@@ -352,7 +354,8 @@ class Will extends React.Component {
         };
     }
 
-    startEdit() {
+    startEdit(e) {
+        e.preventDefault();
         this.setState({editing: true});
     }
 
@@ -380,7 +383,7 @@ class Will extends React.Component {
             <h4>
                 Will
                 {!this.state.editing
-                    ? <small><button type="button" className="btn-link glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></button></small>
+                    ? <span> <small><a href="#" className="glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></a></small></span>
                     : <span> <button type="submit" className="btn btn-primary">Save</button> <button type="button" className="btn btn-default" onClick={this.onCancel.bind(this)}>Cancel</button></span>}
             </h4>
             {!this.state.editing
@@ -537,7 +540,7 @@ class Day extends Phase {
         return <div>
             {this.heading("Day", this.props.lynchOnConsensusMet ? 'or on consensus' : '')}
             {this.props.deaths.length > 0
-                ? this.props.deaths.map(player =>
+                ? this.props.deaths.sort(onKeys(player => [player.name])).map(player =>
                     <Death key={player.name} player={player} reason="died" />)
                 : null}
 
@@ -573,19 +576,20 @@ class Death extends React.Component {
         };
     }
 
-    toggleWill() {
+    toggleWill(e) {
+        e.preventDefault();
         this.setState({showingWill: !this.state.showingWill});
     }
 
     render() {
         return <div>
             <p>
-                <strong>{this.props.player.name}</strong> the <strong>{this.props.player.fullRole}</strong> {this.props.player.modKillReason === null ? this.props.reason : <span>was <strong>modkilled</strong> (<em>{this.props.player.modKillReason}</em>)</span>}.
+                <strong>{this.props.player.name}</strong> the <strong>{this.props.player.fullRole}</strong> {this.props.player.modKillReason === null ? this.props.reason : <span>was <strong>modkilled</strong> (<em>{this.props.player.modKillReason}</em>)</span>}.{' '}
                 {this.props.player.modKillReason === null
                     ? this.props.player.will !== ''
-                        ? <button type="button" onClick={this.toggleWill.bind(this)} className="btn-link" href="#">{this.state.showingWill ? 'Hide will' : 'Show will'}</button>
-                        : <span> No will was found.</span>
-                    : <span> Will not available due to modkill.</span>}
+                        ? <a onClick={this.toggleWill.bind(this)} href="#">They left a will{this.state.showingWill ? ' (shown below)' : null}.</a>
+                        : <span>They did not leave a will.</span>
+                    : <span>Their will is not available due to modkill.</span>}
             </p>
             {this.state.showingWill
                 ? <blockquote>
@@ -605,7 +609,7 @@ class DayResult extends React.Component {
                 ? <Death player={this.props.lynched} reason="was lynched" />
                 : <p>Nobody was lynched.</p>}
             {this.props.deaths.length > 0
-                ? this.props.deaths.map(player =>
+                ? this.props.deaths.sort(onKeys(player => [player.name])).map(player =>
                     <Death key={player.name} player={player} reason="died" />)
                 : null}
 
@@ -638,7 +642,7 @@ class Night extends Phase {
         return <div>
             {this.heading("Night")}
             {this.props.deaths.length > 0
-                ? this.props.deaths.map(player =>
+                ? this.props.deaths.sort(onKeys(player => [player.name])).map(player =>
                     <Death key={player.name} player={player} reason="died" />)
                 : null}
 
@@ -664,7 +668,7 @@ class NightResult extends React.Component {
         return <div>
             <h3>Night {this.props.turn} <small>ended</small></h3>
             {this.props.deaths.length > 0
-                ? this.props.deaths.map(player =>
+                ? this.props.deaths.sort(onKeys(player => [player.name])).map(player =>
                     <Death key={player.name} player={player} reason="was found dead" />)
                 : <p>Nobody was found dead.</p>}
 
@@ -791,14 +795,17 @@ class LogEntry extends React.Component {
             ? this.props.entry.planned === null
                 ? this.present(this.props.entry.final)
                 : <div>
-                    <div><del>{this.present(this.props.entry.planned)}</del> (rewritten)</div>
+                    <div><del>{this.present(this.props.entry.planned)}</del> (altered)</div>
                     <div>{this.present(this.props.entry.final)}</div>
                 </div>
             : <div><del>{this.present(this.props.entry.planned)}</del> (blocked)</div>
         }</div>{triggerKeys.length > 0
-            ? <ul>
-                {triggerKeys.map(key => <LogEntry key={key} entry={this.props.entry.triggers[key]} />)}
-            </ul>
+            ? <div>
+                <em>caused:</em>
+                <ul>
+                    {triggerKeys.map(key => <LogEntry key={key} entry={this.props.entry.triggers[key]} />)}
+                </ul>
+            </div>
             : null}</li>;
     }
 }
@@ -848,9 +855,9 @@ class End extends React.Component {
 
                 return <div key={phase + turn}>
                     <h5>{phase} {turn}</h5>
-                    {entryKeys.length > 0
-                        ? <ul>{entryKeys.map(key => <LogEntry key={key} entry={entries[key]} />)}</ul>
-                        : <div><em>Nothing happened.</em></div>}
+                    <ul>{entryKeys.length > 0
+                        ? entryKeys.map(key => <LogEntry key={key} entry={entries[key]} />)
+                        : <li><em>Nothing happened.</em></li>}</ul>
                 </div>;
             }))}
         </div>;
