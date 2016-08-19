@@ -580,10 +580,12 @@ class Death extends React.Component {
     render() {
         return <div>
             <p>
-                <strong>{this.props.player.name}</strong> the <strong>{this.props.player.fullRole}</strong> {this.props.reason}.
-                {this.props.player.will !== ''
-                    ? <button type="button" onClick={this.toggleWill.bind(this)} className="btn-link" href="#">{this.state.showingWill ? 'Hide will' : 'Show will'}</button>
-                    : <span> No will was found.</span>}
+                <strong>{this.props.player.name}</strong> the <strong>{this.props.player.fullRole}</strong> {this.props.player.modKillReason === null ? this.props.reason : <span>was <strong>modkilled</strong> (<em>{this.props.player.modKillReason}</em>)</span>}.
+                {this.props.player.modKillReason === null
+                    ? this.props.player.will !== ''
+                        ? <button type="button" onClick={this.toggleWill.bind(this)} className="btn-link" href="#">{this.state.showingWill ? 'Hide will' : 'Show will'}</button>
+                        : <span> No will was found.</span>
+                    : <span> Will not available due to modkill.</span>}
             </p>
             {this.state.showingWill
                 ? <blockquote>
@@ -635,6 +637,10 @@ class Night extends Phase {
     render() {
         return <div>
             {this.heading("Night")}
+            {this.props.deaths.length > 0
+                ? this.props.deaths.map(player =>
+                    <Death key={player.name} player={player} reason="died" />)
+                : null}
 
             {this.props.plan.length > 0
                 ? <div>
@@ -660,7 +666,7 @@ class NightResult extends React.Component {
             {this.props.deaths.length > 0
                 ? this.props.deaths.map(player =>
                     <Death key={player.name} player={player} reason="was found dead" />)
-                : <p>Nobody died.</p>}
+                : <p>Nobody was found dead.</p>}
 
             {this.props.plan.length > 0
                 ? <div>
@@ -1075,7 +1081,8 @@ class Root extends React.Component {
                                plan={this.state.phaseState.plan}
                                will={this.state.will}
                                dead={dead}
-                               players={this.state.publicState.players} /> :
+                               players={this.state.publicState.players}
+                               deaths={this.state.phaseState.deaths} /> :
                      this.state.phaseState.phase == 'Day' ?
                         <Day client={this.client}
                              turn={this.state.publicState.turn}

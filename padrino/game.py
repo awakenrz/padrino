@@ -79,6 +79,7 @@ class Game(object):
             return {
                 'phase': 'Night',
                 'end': self.meta['schedule']['phase_end'],
+                'deaths': self.get_current_deaths_view(),
                 'plan': self.get_current_plan_view(player_id),
             }
 
@@ -255,40 +256,56 @@ class Game(object):
 
         return out
 
+    def get_post_suffix(self, phase, turn):
+        if phase == 'night':
+            return 'day.' + str(turn)
+
+        if phase == 'day':
+            return 'night.' + str(turn + 1)
+
     def get_messages_view(self, turn, phase, player_id, raw_plan):
         state_path = self.state_path + '.' + phase + '.' + str(turn)
-        state_post_path = self.state_path + '.' + phase + '.post.' + str(turn)
+        state_post_path = self.state_path + '.' + \
+                          self.get_post_suffix(phase, turn)
 
         return self.interpret_messages(
             raw_plan,
             glue.run('view-messages', state_path, state_post_path)
                 .get(player_id, []))
 
-    def interpret_raw_deaths(self, deaths):
-        return [{
+    def interpret_raw_cause(self, player_id, cause):
+        mod_kill_reason = cause.get('ModKilled', {}).get('reason')
+        return {
             'name': self.meta['players'][player_id]['name'],
             'fullRole': self.get_full_role(player_id),
-            'lynched': cause == 'Lynched',
+            'lynched': next(iter(cause)) == 'Lynched',
+            'modKillReason': mod_kill_reason,
             'will': self.meta['players'][player_id]['will']
-        } for player_id, cause in deaths.items()]
+                    if mod_kill_reason is None else ''
+        }
+
+    def interpret_raw_deaths(self, deaths):
+        return [self.interpret_raw_cause(player_id, cause)
+                for player_id, cause in deaths.items()]
 
     def get_current_messages_view(self, player_id, raw_plan):
-        state_pre_path = self.state_path + '.night.post.' + \
-                         str(self.state['turn'])
+        state_pre_path = self.state_path + '.' + self.state['phase'].lower() + \
+                         '.' + str(self.state['turn'])
         return self.interpret_messages(
             raw_plan,
             glue.run('view-messages', state_pre_path, self.state_path)
                 .get(player_id, []))
 
     def get_current_deaths_view(self):
-        state_pre_path = self.state_path + '.night.post.' + \
-                         str(self.state['turn'])
+        state_pre_path = self.state_path + '.' + self.state['phase'].lower() + \
+                         '.' + str(self.state['turn'])
         return self.interpret_raw_deaths(glue.run('view-deaths', state_pre_path,
                                                   self.state_path))
 
     def get_deaths_view(self, turn, phase):
         state_path = self.state_path + '.' + phase + '.' + str(turn)
-        state_post_path = self.state_path + '.' + phase + '.post.' + str(turn)
+        state_post_path = self.state_path + '.' + \
+                          self.get_post_suffix(phase, turn)
 
         return self.interpret_raw_deaths(glue.run('view-deaths', state_path,
                                                   state_post_path))
@@ -393,13 +410,14 @@ class Game(object):
         orig_players = glue.run('view-players',
                                 self.state_path + '.day.' + str(turn))
         players = glue.run('view-players',
-                           self.state_path + '.day.post.' + str(turn))
+                           self.state_path + '.' +
+                           self.get_post_suffix('day', turn))
 
         candidates = {player_id for player_id, player in orig_players.items()
                       if player['causeOfDeath'] is None} & \
                      {player_id for player_id, player in players.items()
                       if player['causeOfDeath'] is None or
-                         player['causeOfDeath'] == 'Lynched'}
+                         next(iter(player['causeOfDeath'])) == 'Lynched'}
 
         return {
             'votes': {
@@ -461,8 +479,8 @@ class Game(object):
             'agenda': faction_meta['agenda'],
             'friends': [self.meta['players'][friend]['name']
                         for friend in self.players[player_id]['friends']],
-            'cohorts': [self.meta['players'][cohort]['name'] if cohort is not None
-                                                             else None
+            'cohorts': [self.meta['players'][cohort]['name']
+                        if cohort is not None else None
                         for cohort in self.players[player_id]['cohorts']]
         }
 
@@ -587,6 +605,18 @@ class Game(object):
             'target': target
         })
 
+    def modkill(self, target, reason):
+        glue.run('modkill', self.state_path, self.plan_path, input={
+            'target': next(player_id
+                           for player_id, player in self.meta['players'].items()
+                           if player['name'] == target),
+            'reason': reason,
+            'modifyPlan': self.state['phase'] == 'Night'
+        })
+
+        self.load_state()
+        self.load_players()
+
     def finish_phase(self):
         if self.state['phase'] == 'Night':
             self.run_night()
@@ -607,15 +637,13 @@ class Game(object):
         ballot_path = self.ballot_path + '.day.' + str(self.state['turn'])
         plan_path = self.plan_path + '.day.' + str(self.state['turn'])
 
-        shutil.copy(self.ballot_path, ballot_path)
+        os.rename(self.ballot_path, ballot_path)
         os.rename(self.plan_path, plan_path)
 
         glue.run('run-day', self.state_path, ballot_path)
 
-        os.unlink(self.ballot_path)
-
-        shutil.copy(self.state_path, self.state_path + '.day.post.' +
-                    str(self.state['turn']))
+        shutil.copy(self.state_path, self.state_path + '.night.' +
+                    str(self.state['turn'] + 1))
 
         self.load_state()
         self.load_players()
@@ -623,18 +651,12 @@ class Game(object):
         self.make_plan()
 
     def run_night(self):
-        state_path = self.state_path + '.night.' + str(self.state['turn'])
         plan_path = self.plan_path + '.night.' + str(self.state['turn'])
 
-        shutil.copy(self.state_path, state_path)
-        shutil.copy(self.plan_path, plan_path)
+        os.rename(self.plan_path, plan_path)
 
         glue.run('run-night', self.state_path, plan_path)
 
-        os.unlink(self.plan_path)
-
-        shutil.copy(self.state_path, self.state_path + '.night.post.' +
-                    str(self.state['turn']))
         shutil.copy(self.state_path, self.state_path + '.day.' +
                     str(self.state['turn']))
 
@@ -652,3 +674,9 @@ class Game(object):
             self.make_plan()
             self.meta['schedule']['phase_end'] = self.get_next_end()
             self.save_meta()
+
+        state_path = self.state_path + '.night.' + str(self.state['turn'])
+
+        if not os.path.exists(state_path):
+            logger.info("No initial night state found -- copying state.")
+            shutil.copy(self.state_path, state_path)

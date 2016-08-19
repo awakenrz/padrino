@@ -61,6 +61,7 @@ class Builder(object):
             'history': [],
             'turn': 1,
             'phase': 'Night',
+            'modActionIndex': 0,
             'actions': {},
             'factions': {},
             'players': {},

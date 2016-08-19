@@ -91,12 +91,15 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
                 # Only send updated plans to users.
                 continue
 
+            public_state = self.game.get_public_state()
+            player_state = self.game.get_player_state(player_id)
+
             for connection in connections:
                 connection.write_message({
                     'type': 'root',
                     'body': {
-                        'publicState': self.game.get_public_state(),
-                        'playerState': self.game.get_player_state(player_id),
+                        'publicState': public_state,
+                        'playerState': player_state,
                         'phaseState': phase_state
                     },
                     'id': player_id
@@ -244,6 +247,40 @@ class PokeHandler(tornado.web.RequestHandler):
         self.finish('ok')
 
 
+class ModKillHandler(tornado.web.RequestHandler):
+    def initialize(self, game, connections):
+        self.game = game
+        self.connections = connections
+
+    def get(self):
+        token = self.get_argument('token')
+        if not self.game.check_poke_token(token):
+            self.send_error(403)
+            return
+
+        self.game.modkill(self.get_argument('target'),
+                          self.get_argument('reason'))
+
+        # Notify everyone about the modkill.
+        for player_id, connections in self.connections.items():
+            public_state = self.game.get_public_state()
+            phase_state = self.game.get_phase_state(player_id)
+            player_state = self.game.get_player_state(player_id)
+
+            for connection in connections:
+                connection.write_message({
+                    'type': 'root',
+                    'body': {
+                        'publicState': public_state,
+                        'playerState': player_state,
+                        'phaseState': phase_state
+                    },
+                    'id': player_id
+                })
+
+        self.finish('ok')
+
+
 class RefreshHandler(tornado.web.RequestHandler):
     def initialize(self, game, connections):
         self.game = game
@@ -342,6 +379,7 @@ def make_app():
 
     return tornado.web.Application([
         (r'/', MainHandler),
+        (r'/_modkill', ModKillHandler, {'game': g, 'connections': connections}),
         (r'/_peek', PeekHandler, {'game': g}),
         (r'/_poke', PokeHandler, {'game': g, 'updater': updater}),
         (r'/_refresh', RefreshHandler, {'game': g, 'connections': connections}),
