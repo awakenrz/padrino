@@ -836,7 +836,7 @@ class End extends React.Component {
                 struck out are guaranteed to have been performed.
             </p>
 
-            {Object.keys(this.props.log).sort().map(turn => ['Night', 'Day'].map(phase => {
+            {Object.keys(this.props.log).sort(onKeys(k => [+k])).map(turn => ['Night', 'Day'].map(phase => {
                 let phases = this.props.log[turn];
 
                 if (!Object.prototype.hasOwnProperty.call(phases, phase)) {
@@ -844,7 +844,7 @@ class End extends React.Component {
                 }
 
                 let entries = phases[phase];
-                let entryKeys = Object.keys(entries).sort();
+                let entryKeys = Object.keys(entries).sort(onKeys(k => [+k]));
 
                 return <div key={phase + turn}>
                     <h5>{phase} {turn}</h5>
