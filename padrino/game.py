@@ -476,7 +476,7 @@ class Game(object):
             'abilities': player_meta['abilities'],
             'faction': faction_meta['name'],
             'factionIsPrimary': self.state['factions'][faction_id]['isPrimary'],
-            'agenda': faction_meta['agenda'],
+            'agenda': player_meta['agenda'],
             'friends': [self.meta['players'][friend]['name']
                         for friend in self.players[player_id]['friends']],
             'cohorts': [self.meta['players'][cohort]['name']

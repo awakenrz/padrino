@@ -131,7 +131,7 @@ class Builder(object):
         self.state['actions'][ref.token] = ref.traits
         return ref
 
-    def declare_faction(self, name, agenda=None, translations=None, **kwargs):
+    def declare_faction(self, name, translations=None, **kwargs):
         if translations is None:
             translations = {}
 
@@ -139,14 +139,13 @@ class Builder(object):
 
         ref = Ref(len(self.meta['factions']), {
             'name': name,
-            'agenda': agenda,
             'translations': translations
         }, kwargs)
         self.meta['factions'][ref.token] = ref.meta
         self.state['factions'][ref.token] = ref.traits
         return ref
 
-    def declare_player(self, name, role, abilities, effects=None):
+    def declare_player(self, name, role, abilities, effects=None, agenda=None):
         if effects is None:
             effects = []
 
@@ -154,6 +153,7 @@ class Builder(object):
             'name': name,
             'role': role,
             'abilities': abilities,
+            'agenda': agenda,
             'will': ''
         }, effects)
         self.meta['players'][ref.token] = ref.meta

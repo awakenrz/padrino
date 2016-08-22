@@ -138,6 +138,15 @@ def make_simple(b):
             b.make_grant(Actions.KILL, MAFIA_ACTION_GROUP,
                          constraint=b.atom(b.datacons.DuringPhase('Night')))]
 
+        USURPER = lambda who: [
+            b.make_effect(
+                type=b.datacons.Recruited(recruitedFaction=Factions.MAFIA,
+                                          knowsFactionMembers=True,
+                                          traitor=False,
+                                          agenda=b.atom(b.datacons.FulfillsSelector(~b.atom('Alive'), who)))),
+            b.make_grant(Actions.KILL, MAFIA_ACTION_GROUP,
+                         constraint=b.atom(b.datacons.DuringPhase('Night')))]
+
         GODFATHER = lambda: [
             b.make_effect(type=b.datacons.Framed(framedFaction=Factions.TOWN))]
         STRONGMAN = lambda: [
