@@ -19,6 +19,7 @@ class Game(object):
 
         self.state_path = os.path.join(self.root, 'state.yml')
         self.meta_path = os.path.join(self.root, 'meta.yml')
+        self.actions_path = os.path.join(self.root, 'actions.yml')
 
         self.plan_path = os.path.join(self.root, 'plan.yml')
         self.ballot_path = os.path.join(self.root, 'ballot.yml')
@@ -566,11 +567,15 @@ class Game(object):
         with open(self.ballot_path, 'w') as f:
             yaml.dump({}, f, default_flow_style=False)
 
+    def make_actions(self):
+        glue.run('view-action-groups', self.state_path, self.actions_path)
+
     def edit_plan(self, action_group, action, source, targets):
         if self.state['phase'] != 'Night':
             raise ValueError('not night time')
 
-        glue.run('plan', self.state_path, self.plan_path, input={
+        glue.run('plan', self.state_path, self.actions_path, self.plan_path,
+                 input={
             'actionGroup': action_group,
             'action': action,
             'source': source,
@@ -581,7 +586,8 @@ class Game(object):
         if self.state['phase'] != 'Day':
             raise ValueError('not day time')
 
-        glue.run('impulse', self.state_path, self.plan_path, input={
+        glue.run('impulse', self.state_path, self.actions_path, self.plan_path,
+                 input={
             'actionGroup': action_group,
             'action': action,
             'source': source,
@@ -635,9 +641,11 @@ class Game(object):
 
     def run_day(self):
         ballot_path = self.ballot_path + '.day.' + str(self.state['turn'])
+        actions_path = self.actions_path + '.day.' + str(self.state['turn'])
         plan_path = self.plan_path + '.day.' + str(self.state['turn'])
 
         os.rename(self.ballot_path, ballot_path)
+        os.rename(self.actions_path, actions_path)
         os.rename(self.plan_path, plan_path)
 
         glue.run('run-day', self.state_path, ballot_path)
@@ -649,13 +657,16 @@ class Game(object):
         self.load_players()
 
         self.make_plan()
+        self.make_actions()
 
     def run_night(self):
         plan_path = self.plan_path + '.night.' + str(self.state['turn'])
+        actions_path = self.actions_path + '.night.' + str(self.state['turn'])
 
         os.rename(self.plan_path, plan_path)
+        os.rename(self.actions_path, actions_path)
 
-        glue.run('run-night', self.state_path, plan_path)
+        glue.run('run-night', self.state_path, actions_path, plan_path)
 
         shutil.copy(self.state_path, self.state_path + '.day.' +
                     str(self.state['turn']))
@@ -664,6 +675,7 @@ class Game(object):
         self.load_players()
 
         self.make_ballot()
+        self.make_actions()
         self.make_plan()
 
     def start(self):
@@ -672,6 +684,8 @@ class Game(object):
                         "time running the server.")
 
             self.make_plan()
+            self.make_actions()
+
             self.meta['schedule']['phase_end'] = self.get_next_end()
             self.save_meta()
 
