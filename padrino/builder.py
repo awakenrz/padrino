@@ -131,11 +131,11 @@ class Builder(object):
         self.state['actions'][ref.token] = ref.traits
         return ref
 
-    def declare_faction(self, name, agenda, translations=None, **kwargs):
+    def declare_faction(self, name, agenda=None, translations=None, **kwargs):
         if translations is None:
             translations = {}
 
-        kwargs.setdefault('winCondition', self.datacons.Primary())
+        kwargs.setdefault('isPrimary', True)
 
         ref = Ref(len(self.meta['factions']), {
             'name': name,

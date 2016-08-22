@@ -6,13 +6,11 @@ def make_simple(b):
 
     class Factions:
         TOWN = b.declare_faction(
-            'Town',
-            'Eradicate all members of the mafia.', {
+            'Town', {
                 'Vanilla': 'Vanilla Townie'
             })
         MAFIA = b.declare_faction(
-            'Mafia',
-            'Eradicate all members of the town.', {
+            'Mafia', {
                 'Vanilla': 'Mafia Goon'
             })
 
@@ -129,12 +127,14 @@ def make_simple(b):
         TOWN = lambda: [b.make_effect(
             type=b.datacons.Recruited(recruitedFaction=Factions.TOWN,
                                       knowsFactionMembers=False,
-                                      traitor=False))]
+                                      traitor=False,
+                                      agenda=b.datacons.Trivial()))]
         MAFIA = lambda: [
             b.make_effect(
                 type=b.datacons.Recruited(recruitedFaction=Factions.MAFIA,
                                           knowsFactionMembers=True,
-                                          traitor=False)),
+                                          traitor=False,
+                                          agenda=b.datacons.Trivial())),
             b.make_grant(Actions.KILL, MAFIA_ACTION_GROUP,
                          constraint=b.atom(b.datacons.DuringPhase('Night')))]
 

@@ -720,7 +720,11 @@ class Profile extends React.Component {
                 <dd>{this.props.abilities}</dd>
 
                 <dt>Agenda</dt>
-                <dd>{this.props.agenda}</dd>
+                <dd>
+                    {this.props.factionIsPrimary ? <span>Eliminate all members of all other factions.</span> : null}
+                    {this.props.factionIsPrimary && this.props.agenda !== null ? <em><br/>and<br/></em> : null}
+                    {this.props.agenda !== null ? this.props.agenda : null}
+                </dd>
 
                 <dt>Friends</dt>
                 <dd>
@@ -750,7 +754,7 @@ class Profile extends React.Component {
                     </ul> : 'none'}
                 </dd>
 
-                <dt>Players</dt>
+                <dt>Players <span className="badge">{Object.keys(this.props.players).filter(name => this.props.players[name] === null).length}</span></dt>
                 <dd>
                     <ul>
                         {Object.keys(this.props.players).sort(onKeys(name => [this.props.players[name] === null ? 0 : 1, name])).map(name => {
@@ -1123,6 +1127,7 @@ class Root extends React.Component {
                              fullRole={this.state.playerState.fullRole}
                              abilities={this.state.playerState.abilities}
                              faction={this.state.playerState.faction}
+                             factionIsPrimary={this.state.playerState.factionIsPrimary}
                              agenda={this.state.playerState.agenda}
                              friends={this.state.playerState.friends}
                              cohorts={this.state.playerState.cohorts}

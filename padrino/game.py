@@ -42,11 +42,11 @@ class Game(object):
     def load_players(self):
         self.players = glue.run('view-players', self.state_path)
 
-    def get_raw_fates(self):
-        return glue.run('view-fates', self.state_path)
+    def get_raw_winners(self):
+        return glue.run('view-winners', self.state_path)
 
     def is_game_over(self):
-        return all(fate is not None for fate in self.get_raw_fates().values())
+        return self.get_raw_winners() is not None
 
     def set_will_for(self, player_id, will):
         if self.players[player_id]['causeOfDeath'] is not None:
@@ -58,14 +58,13 @@ class Game(object):
         return self.meta['players'][player_id]['will']
 
     def get_phase_state(self, player_id):
-        fates = self.get_raw_fates()
+        winners = self.get_raw_winners()
 
-        if self.is_game_over():
+        if winners is not None:
             return {
                 'phase': 'End',
                 'winners': [self.meta['players'][player_id]['name']
-                            for player_id, player in self.players.items()
-                            if fates[player['faction']]],
+                            for player_id in winners],
                 'players': {
                     self.meta['players'][player_id]['name']: {
                         'fullRole': self.get_full_role(player_id),
@@ -476,6 +475,7 @@ class Game(object):
             'fullRole': self.get_full_role(player_id),
             'abilities': player_meta['abilities'],
             'faction': faction_meta['name'],
+            'factionIsPrimary': self.state['factions'][faction_id]['isPrimary'],
             'agenda': faction_meta['agenda'],
             'friends': [self.meta['players'][friend]['name']
                         for friend in self.players[player_id]['friends']],
