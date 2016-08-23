@@ -248,8 +248,9 @@ class PokeHandler(tornado.web.RequestHandler):
 
 
 class ModKillHandler(tornado.web.RequestHandler):
-    def initialize(self, game, connections):
+    def initialize(self, game, updater, connections):
         self.game = game
+        self.updater = updater
         self.connections = connections
 
     def get(self):
@@ -260,6 +261,9 @@ class ModKillHandler(tornado.web.RequestHandler):
 
         self.game.modkill(self.get_argument('target'),
                           self.get_argument('reason'))
+
+        if self.game.is_game_over():
+            self.updater.run()
 
         # Notify everyone about the modkill.
         for player_id, connections in self.connections.items():
@@ -379,7 +383,8 @@ def make_app():
 
     return tornado.web.Application([
         (r'/', MainHandler),
-        (r'/_modkill', ModKillHandler, {'game': g, 'connections': connections}),
+        (r'/_modkill', ModKillHandler, {'game': g, 'updater': updater,
+                                        'connections': connections}),
         (r'/_peek', PeekHandler, {'game': g}),
         (r'/_poke', PokeHandler, {'game': g, 'updater': updater}),
         (r'/_refresh', RefreshHandler, {'game': g, 'connections': connections}),
