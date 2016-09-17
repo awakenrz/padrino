@@ -56,10 +56,10 @@ function interpretInfo(info) {
     switch (info.type) {
         case 'GuiltInfo':
             return {
-                name: 'Guilt',
+                name: <FormattedMessage {...translations['info.guilt.title']} />,
                 description: info.isGuilty
-                    ? 'guilty'
-                    : 'not guilty'
+                    ? <FormattedMessage {...translations['info.guilt.positive']} />
+                    : <FormattedMessage {...translations['info.guilt.negative']} />
             };
         case 'PlayersInfo':
             return {
@@ -73,8 +73,8 @@ function interpretInfo(info) {
             };
         case 'FruitInfo':
             return {
-                name: 'Fruit',
-                description: 'how... generous?'
+                name: <FormattedMessage {...translations['info.fruit.title']} />,
+                description: <FormattedMessage {...translations['info.fruit.description']} />
             };
         case 'RoleInfo':
             return {
@@ -83,8 +83,10 @@ function interpretInfo(info) {
             };
         case 'GreetingInfo':
             return {
-                name: 'Greeting',
-                description: <span><strong>{info.greeter}</strong> says howdy from the <strong>{info.faction}</strong> faction!</span>
+                name: <FormattedMessage {...translations['info.greeting.title']} />,
+                description: <FormattedMessage {...translations['info.greeting.description']}
+                                               values={{greeter: <strong>{info.greeter}</strong>,
+                                                        faction: <strong>{info.faction}</strong>}} />
             }
     }
 }
