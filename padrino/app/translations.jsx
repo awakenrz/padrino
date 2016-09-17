@@ -1,44 +1,54 @@
 import {defineMessages} from 'react-intl';
 
 export default defineMessages({
-    'info.greeting.title': {
-        id: 'info.greeting.title',
+    'placeholders.noOne': {
+        id: 'placeholders.noOne',
+        defaultMessage: 'no one'
+    },
+
+    'placeholders.someone': {
+        id: 'placeholders.someone',
+        defaultMessage: 'someone'
+    },
+
+    'message.greeting.title': {
+        id: 'message.greeting.title',
         defaultMessage: 'Greeting',
         description: 'Title of the Greeting info message.'
     },
 
-    'info.greeting.description': {
-        id: 'info.greeting.description',
+    'message.greeting.description': {
+        id: 'message.greeting.description',
         defaultMessage: '{greeter} says howdy from the {faction} faction!',
         description: 'Description of the Greeting info message.'
     },
 
-    'info.guilt.title': {
-        id: 'info.guilt.title',
+    'message.guilt.title': {
+        id: 'message.guilt.title',
         defaultMessage: 'Guilt',
         description: 'Title of the Guilt info message.'
     },
 
-    'info.guilt.positive': {
-        id: 'info.guilt.positive',
+    'message.guilt.positive': {
+        id: 'message.guilt.positive',
         defaultMessage: 'guilty',
         description: 'The player is guilty.'
     },
 
-    'info.guilt.negative': {
-        id: 'info.guilt.negative',
+    'message.guilt.negative': {
+        id: 'message.guilt.negative',
         defaultMessage: 'not guilty',
         description: 'The player is not guilty.'
     },
 
-    'info.fruit.title': {
-        id: 'info.fruit.title',
+    'message.fruit.title': {
+        id: 'message.fruit.title',
         defaultMessage: 'Fruit',
         description: 'Title of the Fruit info message.'
     },
 
-    'info.fruit.description': {
-        id: 'info.fruit.description',
+    'message.fruit.description': {
+        id: 'message.fruit.description',
         defaultMessage: 'how... generous?',
         description: 'Description of the Fruit info message.'
     },
@@ -65,5 +75,15 @@ export default defineMessages({
         id: 'phase.will.help',
         defaultMessage: 'You may use {formattingHelpLink} to format your text.',
         description: 'Help message for editing the will.'
+    },
+
+    'ballot.criteria.mostVotes': {
+        id: 'ballot.criteria.mostVotes',
+        defaultMessage: 'The player with the most votes will be lynched.'
+    },
+
+    'ballot.criteria.strictMajority': {
+        id: 'ballot.criteria.strictMajority',
+        defaultMessage: 'The player for whom the strict majority of votes are for will be lynched ({numVotesRequired} required).'
     }
 });

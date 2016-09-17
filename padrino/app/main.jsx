@@ -52,43 +52,44 @@ function parseCommand(command) {
     };
 }
 
+const INFO_INTERPRETATIONS = {
+    GulitInfo: (info) => ({
+        name: <FormattedMessage {...translations['message.guilt.title']} />,
+        description: info.isGuilty
+            ? <FormattedMessage {...translations['message.guilt.positive']} />
+            : <FormattedMessage {...translations['message.guilt.negative']} />
+    }),
+
+    PlayersInfo: (info) => ({
+        name: 'Players',
+        description: info.players.join(', ') || <FormattedMessage {...translations['placeholders.noOne']} />
+    }),
+
+    ActionsInfo: (info) => ({
+        name: 'Actions',
+        description: info.actions.map(command => command.replace(/\$\d+/g, 'someone')).join(', ') || 'no actions'
+    }),
+
+    FruitInfo: (info) => ({
+        name: <FormattedMessage {...translations['message.fruit.title']} />,
+        description: <FormattedMessage {...translations['message.fruit.description']} />
+    }),
+
+    RoleInfo: (info) => ({
+        name: 'Role',
+        description: info.role
+    }),
+
+    GreetingInfo: (info) => ({
+        name: <FormattedMessage {...translations['message.greeting.title']} />,
+        description: <FormattedMessage {...translations['message.greeting.description']}
+                                       values={{greeter: <strong>{info.greeter}</strong>,
+                                                faction: <strong>{info.faction}</strong>}} />
+    }),
+};
+
 function interpretInfo(info) {
-    switch (info.type) {
-        case 'GuiltInfo':
-            return {
-                name: <FormattedMessage {...translations['info.guilt.title']} />,
-                description: info.isGuilty
-                    ? <FormattedMessage {...translations['info.guilt.positive']} />
-                    : <FormattedMessage {...translations['info.guilt.negative']} />
-            };
-        case 'PlayersInfo':
-            return {
-                name: 'Players',
-                description: info.players.join(', ') || 'no players'
-            };
-        case 'ActionsInfo':
-            return {
-                name: 'Actions',
-                description: info.actions.map(command => command.replace(/\$\d+/g, 'someone')).join(', ') || 'no actions'
-            };
-        case 'FruitInfo':
-            return {
-                name: <FormattedMessage {...translations['info.fruit.title']} />,
-                description: <FormattedMessage {...translations['info.fruit.description']} />
-            };
-        case 'RoleInfo':
-            return {
-                name: 'Role',
-                description: info.role
-            };
-        case 'GreetingInfo':
-            return {
-                name: <FormattedMessage {...translations['info.greeting.title']} />,
-                description: <FormattedMessage {...translations['info.greeting.description']}
-                                               values={{greeter: <strong>{info.greeter}</strong>,
-                                                        faction: <strong>{info.faction}</strong>}} />
-            }
-    }
+    return INFO_INTERPRETATIONS[info.type](info);
 }
 
 class Action extends React.Component {
@@ -163,12 +164,16 @@ class Action extends React.Component {
                         let targets = this.props.action.targets;
                         if (editMode) {
                             return <select className="form-control" defaultValue={this.props.action.targets === null ? "" : this.props.action.targets[part.group]} key={i} name={'target' + part.group}>
-                                <option value="">no one</option>
+                                <FormattedMessage {...translations['placeholders.noOne']}>{(message) => <option value="">{message}</option>}</FormattedMessage>
                                 {this.props.action.candidates[part.group].sort().map(candidate =>
                                     <option value={candidate} key={candidate}>{candidate}</option>)}
                             </select>;
                         } else {
-                            return targets === null ? <em key={i}>{this.props.action.compulsion !== 'Forced' ? 'no one' : 'someone'}</em> : <strong key={i}>{targets[part.group]}</strong>;
+                            return targets === null
+                                ? <em key={i}>{this.props.action.compulsion !== 'Forced'
+                                    ? <FormattedMessage {...translations['placeholders.noOne']} />
+                                    : <FormattedMessage {...translations['placeholders.someone']} />}</em>
+                                : <strong key={i}>{targets[part.group]}</strong>;
                         }
                 }
             });
@@ -333,7 +338,7 @@ class Vote extends React.Component {
                     <div className="form-group">
                         <label htmlFor="vote-target"><strong>Your vote:</strong></label> {this.state.editing
                             ? <select className="form-control" defaultValue={this.props.target === null ? "" : this.props.target} name="target" id="vote-target">
-                                <option value="">no one</option>
+                                <FormattedMessage {...translations['placeholders.noOne']}>{(message) => <option value="">{message}</option>}</FormattedMessage>
                                 {this.props.candidates.map(candidate =>
                                     <option value={candidate} key={candidate}>{candidate}</option>)}
                             </select>
@@ -505,9 +510,10 @@ class Ballot extends React.Component {
                         client={this.props.client} />
                 : null}
 
-            <p><strong>Consensus criteria:</strong> {{
-                MostVotes: <span>The player with the most votes will be lynched.</span>,
-                StrictMajority: <span>The player for whom the strict majority of votes are for will be lynched ({Math.floor(voters.length / 2 + 1)} required).</span>
+            <p><strong>Consensus criteria: </strong>{{
+                MostVotes: <FormattedMessage {...translations['ballot.criteria.mostVotes']} />,
+                StrictMajority: <FormattedMessage {...translations['ballot.criteria.strictMajority']}
+                                                  values={{numVotesRequired: Math.floor(voters.length / 2 + 1)}} />
             }[this.props.consensus]}</p>
 
             <p>Votes cast:</p>
@@ -763,7 +769,7 @@ class Profile extends React.Component {
                     {this.props.cohorts.length > 0 ? <ul>
                         {this.props.cohorts.sort(onKeys(name => [name === null || this.props.players[name] === null ? 0 : 1, name])).map((name, i) => {
                             if (name === null) {
-                                return <li key={i}><em>someone</em></li>;
+                                return <li key={i}><em><FormattedMessage {...translations['placeholders.someone']} /></em></li>;
                             } else {
                                 let player = this.props.players[name];
                                 return <li key={name}>{player === null
