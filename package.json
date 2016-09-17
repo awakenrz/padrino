@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "codemirror": "^5.16.0",
+    "deep-equal": "^1.0.1",
     "jwt-decode": "^2.0.1",
     "querystring": "^0.2.0",
     "react": "^15.1.0",

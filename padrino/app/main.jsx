@@ -1,3 +1,4 @@
+import deepEqual from 'deep-equal';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import CodeMirror from './react-codemirror.jsx';
@@ -544,8 +545,7 @@ class Ballot extends React.Component {
 
 var Day = Phase("Day", class extends React.Component {
     shouldComponentUpdate(nextProps, nextState) {
-        return this.props.isPrimaryEnding !== nextProps.isPrimaryEnding ||
-               this.props.isTwilightEnding !== nextProps.isTwilightEnding;
+        return !deepEqual(this.props, nextProps);
     }
 
     onActionSave(i, targets) {
@@ -650,8 +650,7 @@ class DayResult extends React.Component {
 
 var Night = Phase("Night", class extends React.Component {
     shouldComponentUpdate(nextProps, nextState) {
-        return this.props.isPrimaryEnding !== nextProps.isPrimaryEnding ||
-               this.props.isTwilightEnding !== nextProps.isTwilightEnding;
+        return !deepEqual(this.props, nextProps);
     }
 
     onActionSave(i, targets) {
