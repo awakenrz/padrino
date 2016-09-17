@@ -11,8 +11,13 @@ module.exports = {
     filename: 'bundle.js'
   },
   module: {
+    preLoaders: [{
+      test: /\.json$/,
+      exclude: /node_modules/,
+      loader: 'json'
+    }],
     loaders: [{
-      test: /\.jsx?/,
+      test: /\.jsx?$/,
       include: APP_DIR,
       loader: 'babel'
     }]

@@ -435,5 +435,10 @@ export default defineMessages({
     'error.temporary': {
         id: 'error.temporary',
         defaultMessage: 'Temporarily disconnected from server. We\'ll be back shortly!'
+    },
+
+    'loading': {
+        id: 'loading',
+        defaultMessage: 'Loading...'
     }
 });

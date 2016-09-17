@@ -8,7 +8,8 @@ import jwtDecode from 'jwt-decode';
 import querystring from 'querystring';
 import {} from 'codemirror/mode/markdown/markdown';
 
-import translations from './translations.jsx';
+import translations from './translations';
+import messages from './translations/messages';
 
 const QS = querystring.parse(window.location.search.substring(1));
 
@@ -1079,6 +1080,11 @@ class Root extends React.Component {
     }
 
     render() {
+        let locale = (this.state.ready ? this.state.publicInfo.locale : null) || QS.lang || navigator.language;
+        return <IntlProvider locale={locale} messages={messages[locale]}>{this.renderBody()}</IntlProvider>;
+    }
+
+    renderBody() {
         if (this.state.error !== null) {
             return <div className="container">
                 <div className="alert alert-danger"><FormattedMessage {...translations['error.permanent']} values={{reason: this.state.error}} /></div>
@@ -1086,7 +1092,7 @@ class Root extends React.Component {
         }
 
         if (!this.state.ready) {
-            return <div>Loading...</div>;
+            return <div><FormattedMessage {...translations['loading']} /></div>;
         }
 
         let results = [];
@@ -1191,8 +1197,4 @@ class Root extends React.Component {
     }
 }
 
-ReactDOM.render(
-    <IntlProvider locale={QS.lang || navigator.language}>
-        <Root/>
-    </IntlProvider>,
-    document.querySelector('main'));
+ReactDOM.render(<Root/>, document.querySelector('main'));

@@ -56,7 +56,7 @@ class Builder(object):
                  night_end=datetime.time(10, 0),
                  day_end=datetime.time(12, 15),
                  twilight_duration=datetime.timedelta(0),
-                 tz='Etc/UTC'):
+                 tz='Etc/UTC', locale=None):
         self.state = {
             'history': [],
             'turn': 1,
@@ -80,6 +80,7 @@ class Builder(object):
                 'phase_end': None,
                 'tz': tz,
             },
+            'locale': locale,
             'motd': motd,
             'end_on_consensus_met': end_on_consensus_met,
             'actions': {},
