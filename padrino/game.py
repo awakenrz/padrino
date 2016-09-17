@@ -451,7 +451,7 @@ class Game(object):
             'name': self.meta['name'],
             'motd': self.meta['motd'],
             'consensus': self.state['consensus'],
-            'lynchOnConsensusMet': self.meta['lynch_on_consensus_met'],
+            'endOnConsensusMet': self.meta['end_on_consensus_met'],
             'twilightDuration': self.meta['schedule']['twilight_duration']
         }
 

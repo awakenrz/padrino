@@ -1,10 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import CodeMirror from './react-codemirror.jsx';
+import {IntlProvider, FormattedMessage} from 'react-intl';
 import Remarkable from 'remarkable';
 import jwtDecode from 'jwt-decode';
 import querystring from 'querystring';
 import {} from 'codemirror/mode/markdown/markdown';
+
+import translations from './translations.jsx';
+
+const QS = querystring.parse(window.location.search.substring(1));
 
 const REMARKABLE = new Remarkable('commonmark', {
     html: false,
@@ -205,7 +210,7 @@ class Action extends React.Component {
     }
 }
 
-class Phase extends React.Component {
+var Phase = (title, Body) => class extends React.Component {
     componentWillMount() {
         this.timer = window.setInterval(this.tick.bind(this), 50);
         this.tick();
@@ -265,13 +270,18 @@ class Phase extends React.Component {
         return this.getTwilightTimeLeft() <= 0;
     }
 
-    heading(name, primarySuffix='') {
-        return <h3>{name} {this.props.turn} <small>{
+    render() {
+        return <div>
+            <h3>{title} {this.props.turn} <small>{
             !this.isPrimaryEnding()
-                ? "ends in " + this.formatDuration(this.getPrimaryTimeLeft()) + (primarySuffix !== '' ? ' ' + primarySuffix : '')
+                ? "ends in " + this.formatDuration(this.getPrimaryTimeLeft()) + (this.props.endOnConsensusMet ? ' or on consensus met' : '')
                 : !this.isTwilightEnding()
                     ? "twilight ends in " + this.formatDuration(this.getTwilightTimeLeft())
-                    : "ending..."}</small></h3>;
+                    : "ending..."}</small></h3>
+            <Body {...this.props}
+                  isPrimaryEnding={this.isPrimaryEnding()}
+                  isTwilightEnding={this.isTwilightEnding()} />
+        </div>
     }
 }
 
@@ -381,7 +391,7 @@ class Will extends React.Component {
     render() {
         return <form onSubmit={this.onSubmit.bind(this)}><fieldset disabled={this.state.waiting}>
             <h4>
-                Will
+                <FormattedMessage {...translations['phase.will.title']} />
                 {!this.state.editing
                     ? <span> <small><a href="#" className="glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></a></small></span>
                     : <span> <button type="submit" className="btn btn-primary">Save</button> <button type="button" className="btn btn-default" onClick={this.onCancel.bind(this)}>Cancel</button></span>}
@@ -389,7 +399,7 @@ class Will extends React.Component {
             {!this.state.editing
                 ? this.props.will !== ''
                     ? <blockquote dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.will)}}></blockquote>
-                    : <em>You are currently not leaving a will.</em>
+                    : <em><FormattedMessage {...translations['phase.will.notLeavingWill']} /></em>
                 : <div className="form-group">
                     <CodeMirror ref="will" defaultValue={this.props.will} defaultOptions={{
                         viewportMargin: Infinity,
@@ -398,7 +408,8 @@ class Will extends React.Component {
                         mode: 'markdown',
                         theme: 'default'
                     }}/>
-                    <p className="help-block">You may use <a href="http://commonmark.org/help/" target="markdown-help">Markdown</a> to format your text.</p>
+                    <p className="help-block"><FormattedMessage {...translations['phase.will.help']}
+                                                                values={{formattingHelpLink: <a href="http://commonmark.org/help/" target="markdown-help">Markdown</a>}} /></p>
                 </div>}
         </fieldset></form>;
     }
@@ -455,7 +466,7 @@ function intersperse(arr, sepf) {
     }, [arr[0]]);
 }
 
-class Votes extends React.Component {
+class Ballot extends React.Component {
     render() {
         let voted = {};
         let abstentions = [];
@@ -531,14 +542,18 @@ class Votes extends React.Component {
     }
 }
 
-class Day extends Phase {
+var Day = Phase("Day", class extends React.Component {
+    shouldComponentUpdate(nextProps, nextState) {
+        return this.props.isPrimaryEnding !== nextProps.isPrimaryEnding ||
+               this.props.isTwilightEnding !== nextProps.isTwilightEnding;
+    }
+
     onActionSave(i, targets) {
         return this.props.client.request('impulse', {i: i, targets: targets});
     }
 
     render() {
         return <div>
-            {this.heading("Day", this.props.lynchOnConsensusMet ? 'or on consensus' : '')}
             {this.props.deaths.length > 0
                 ? this.props.deaths.sort(onKeys(player => [player.name])).map(player =>
                     <Death key={player.name} player={player} reason="died" />)
@@ -546,10 +561,10 @@ class Day extends Phase {
 
             {this.props.plan.length > 0
                 ? <div>
-                    <h4>Actions</h4>
+                    <h4><FormattedMessage {...translations['phase.actions.title']} /></h4>
                     <p>The following <strong>instantaneous</strong> actions are available, so choose carefully if you want to use one!</p>
                     <Plan plan={this.props.plan}
-                          onActionSave={!this.isTwilightEnding() ? this.onActionSave.bind(this) : null}
+                          onActionSave={!this.props.isTwilightEnding ? this.onActionSave.bind(this) : null}
                           canEditAction={(i) => this.props.plan[i].targets === null}
                           messages={this.props.messages}
                           saveButtonClass='danger'
@@ -557,16 +572,16 @@ class Day extends Phase {
                 </div>
                 : null}
 
-            <Votes votes={this.props.ballot.votes}
-                   consensus={this.props.consensus}
-                   canEdit={!this.isPrimaryEnding()}
-                   me={this.props.me}
-                   client={this.props.client} />
+            <Ballot votes={this.props.ballot.votes}
+                    consensus={this.props.consensus}
+                    canEdit={!this.props.isPrimaryEnding}
+                    me={this.props.me}
+                    client={this.props.client} />
 
             {!this.props.dead ? <Will client={this.props.client} will={this.props.will} /> : null}
         </div>;
     }
-}
+});
 
 class Death extends React.Component {
     constructor(props) {
@@ -615,7 +630,7 @@ class DayResult extends React.Component {
 
             {this.props.plan.length > 0
                 ? <div>
-                    <h4>Actions</h4>
+                    <h4><FormattedMessage {...translations['phase.actions.title']} /></h4>
                     <p>The following <strong>instantaneous</strong> actions were available:</p>
                     <Plan plan={this.props.plan}
                           canEditAction={(i) => false}
@@ -624,7 +639,7 @@ class DayResult extends React.Component {
                 </div>
                 : null}
 
-            <Votes votes={this.props.votes}
+            <Ballot votes={this.props.votes}
                    consensus={this.props.consensus}
                    canEdit={false}
                    me={this.props.me}
@@ -633,14 +648,18 @@ class DayResult extends React.Component {
     }
 }
 
-class Night extends Phase {
+var Night = Phase("Night", class extends React.Component {
+    shouldComponentUpdate(nextProps, nextState) {
+        return this.props.isPrimaryEnding !== nextProps.isPrimaryEnding ||
+               this.props.isTwilightEnding !== nextProps.isTwilightEnding;
+    }
+
     onActionSave(i, targets) {
         return this.props.client.request('plan', {i: i, targets: targets});
     }
 
     render() {
         return <div>
-            {this.heading("Night")}
             {this.props.deaths.length > 0
                 ? this.props.deaths.sort(onKeys(player => [player.name])).map(player =>
                     <Death key={player.name} player={player} reason="died" />)
@@ -648,11 +667,11 @@ class Night extends Phase {
 
             {this.props.plan.length > 0
                 ? <div>
-                    <h4>Actions</h4>
+                    <h4><FormattedMessage {...translations['phase.actions.title']} /></h4>
                     <p>The following actions are available:</p>
                     <Plan plan={this.props.plan}
                           canEditAction={(i) => true}
-                          onActionSave={!this.isPrimaryEnding() ? this.onActionSave.bind(this) : null}
+                          onActionSave={!this.props.isPrimaryEnding ? this.onActionSave.bind(this) : null}
                           messages={[]}
                           saveButtonClass='primary'
                           saveButtonCaption='Plan' />
@@ -661,7 +680,7 @@ class Night extends Phase {
             {!this.props.dead ? <Will client={this.props.client} will={this.props.will} /> : null}
         </div>;
     }
-}
+});
 
 class NightResult extends React.Component {
     render() {
@@ -674,7 +693,7 @@ class NightResult extends React.Component {
 
             {this.props.plan.length > 0
                 ? <div>
-                    <h4>Actions</h4>
+                    <h4><FormattedMessage {...translations['phase.actions.title']} /></h4>
                     <p>The following actions were available:</p>
                     <Plan plan={this.props.plan}
                           canEditAction={(i) => false}
@@ -892,12 +911,11 @@ class Client {
     }
 
     connect() {
-        let qs = querystring.parse(window.location.search.substring(1));
-        this.id = jwtDecode(qs.token).t;
+        this.id = jwtDecode(QS.token).t;
 
         this.seqNum = 0;
         this.socket = new WebSocket('ws://' + window.location.host + '/ws?' +
-                                    querystring.stringify(qs));
+                                    querystring.stringify({token: QS.token}));
 
         this.socket.onopen = () => {
             this.resetBackoff();
@@ -1089,6 +1107,7 @@ class Root extends React.Component {
                                turn={this.state.publicState.turn}
                                end={this.state.phaseState.end}
                                twilightDuration={0}
+                               endOnConsensusMet={false}
                                plan={this.state.phaseState.plan}
                                will={this.state.will}
                                dead={dead}
@@ -1100,7 +1119,7 @@ class Root extends React.Component {
                              end={this.state.phaseState.end}
                              twilightDuration={this.state.publicInfo.twilightDuration}
                              consensus={this.state.publicInfo.consensus}
-                             lynchOnConsensusMet={this.state.publicInfo.lynchOnConsensusMet}
+                             endOnConsensusMet={this.state.publicInfo.lynchOnConsensusMet}
                              plan={this.state.phaseState.plan}
                              will={this.state.will}
                              dead={dead}
@@ -1144,4 +1163,8 @@ class Root extends React.Component {
     }
 }
 
-ReactDOM.render(<Root/>, document.querySelector('main'));
+ReactDOM.render(
+    <IntlProvider locale={QS.lang || navigator.language}>
+        <Root/>
+    </IntlProvider>,
+    document.querySelector('main'));

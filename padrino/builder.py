@@ -52,7 +52,7 @@ class Ref(object):
 
 class Builder(object):
     def __init__(self, name, motd=None, consensus='MostVotes',
-                 lynch_on_consensus_met=False,
+                 end_on_consensus_met=False,
                  night_end=datetime.time(10, 0),
                  day_end=datetime.time(12, 15),
                  twilight_duration=datetime.timedelta(0),
@@ -81,7 +81,7 @@ class Builder(object):
                 'tz': tz,
             },
             'motd': motd,
-            'lynch_on_consensus_met': lynch_on_consensus_met,
+            'end_on_consensus_met': end_on_consensus_met,
             'actions': {},
             'factions': {},
             'players': {},
