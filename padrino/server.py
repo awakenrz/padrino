@@ -152,7 +152,7 @@ class GameSocketHandler(tornado.websocket.WebSocketHandler):
         # We can't compute the majority ourselves due to vote thief etc.
         consensus_met = self.game.vote(self.me_id, target)
 
-        if self.game.meta['lynch_on_consensus_met'] and consensus_met:
+        if self.game.meta['end_on_consensus_met'] and consensus_met:
             self.game.skip_to_twilight()
             self.updater.schedule_update()
 

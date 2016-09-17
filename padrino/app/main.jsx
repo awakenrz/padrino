@@ -61,13 +61,26 @@ const INFO_INTERPRETATIONS = {
     }),
 
     PlayersInfo: (info) => ({
-        name: 'Players',
-        description: info.players.join(', ') || <FormattedMessage {...translations['placeholders.noOne']} />
+        name: <FormattedMessage {...translations['message.players.title']} />,
+        description: info.players.length > 0
+            ? intersperse(info.players.map(player => <span key={player}>{player}</span>),
+                          () => ', ')
+            : <em><FormattedMessage {...translations['message.players.negative']} /></em>
     }),
 
     ActionsInfo: (info) => ({
-        name: 'Actions',
-        description: info.actions.map(command => command.replace(/\$\d+/g, 'someone')).join(', ') || 'no actions'
+        name: <FormattedMessage {...translations['message.actions.title']} />,
+        description: info.actions.length > 0
+            ? intersperse(info.actions.map((command, i) => parseCommand(command).parts.map((part, i) => {
+                switch (part.type) {
+                    case "text":
+                        return <span key={i}>{part.text}</span>;
+
+                    case "group":
+                        return <FormattedMessage {...translations['placeholder.someone']} key={i} />;
+                }
+            })), () => ', ')
+            : <em><FormattedMessage {...translations['message.actions.negative']} /></em>
     }),
 
     FruitInfo: (info) => ({
@@ -76,7 +89,7 @@ const INFO_INTERPRETATIONS = {
     }),
 
     RoleInfo: (info) => ({
-        name: 'Role',
+        name: <FormattedMessage {...translations['message.role.title']} />,
         description: info.role
     }),
 
@@ -164,15 +177,15 @@ class Action extends React.Component {
                         let targets = this.props.action.targets;
                         if (editMode) {
                             return <select className="form-control" defaultValue={this.props.action.targets === null ? "" : this.props.action.targets[part.group]} key={i} name={'target' + part.group}>
-                                <FormattedMessage {...translations['placeholders.noOne']}>{(message) => <option value="">{message}</option>}</FormattedMessage>
+                                <FormattedMessage {...translations['placeholder.noOne']}>{(message) => <option value="">{message}</option>}</FormattedMessage>
                                 {this.props.action.candidates[part.group].sort().map(candidate =>
                                     <option value={candidate} key={candidate}>{candidate}</option>)}
                             </select>;
                         } else {
                             return targets === null
                                 ? <em key={i}>{this.props.action.compulsion !== 'Forced'
-                                    ? <FormattedMessage {...translations['placeholders.noOne']} />
-                                    : <FormattedMessage {...translations['placeholders.someone']} />}</em>
+                                    ? <FormattedMessage {...translations['placeholder.noOne']} />
+                                    : <FormattedMessage {...translations['placeholder.someone']} />}</em>
                                 : <strong key={i}>{targets[part.group]}</strong>;
                         }
                 }
@@ -182,8 +195,8 @@ class Action extends React.Component {
                 {this.props.action.command} {editMode
                     ? <input type="checkbox" defaultChecked={this.props.action.targets !== null} name='on' />
                     : this.props.action.targets !== null
-                        ? <span> <strong>on</strong></span>
-                        : <span> <em>off</em></span>}
+                        ? <span> <strong><FormattedMessage {...translations['action.value.true']} /></strong></span>
+                        : <span> <em><FormattedMessage {...translations['action.value.false']} /></em></span>}
             </span>;
         }
 
@@ -193,9 +206,9 @@ class Action extends React.Component {
                     <div className="form-inline">
                         <div className="form-group" style={{textDecoration: !this.props.action.available ? 'line-through' : ''}}>
                             {editor}{this.props.action.compulsion === 'Forced'
-                                ? <em>(forced)</em>
+                                ? <em><FormattedMessage {...translations['action.compulsion.forced']} /></em>
                                 : this.props.action.compulsion === 'Required'
-                                    ? <em>(compelled)</em>
+                                    ? <em><FormattedMessage {...translations['action.compulsion.required']} /></em>
                                     : null}
                             {this.props.annotation ? <span> ⇒ {this.props.annotation}</span> : null}
                             {!this.state.editing && this.props.action.available && this.props.action.compulsion !== 'Forced' && this.props.onSave !== null
@@ -204,7 +217,7 @@ class Action extends React.Component {
                         </div>
 
                         {editMode
-                            ? <span> <button type="submit" className={"btn btn-" + this.props.buttonClass}>{this.props.buttonCaption}</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button></span>
+                            ? <span> <button type="submit" className={"btn btn-" + this.props.buttonClass}>{this.props.buttonCaption}</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default"><FormattedMessage {...translations['action.form.cancel']} /></button></span>
                             : null}
                     </div>
 
@@ -218,7 +231,7 @@ class Action extends React.Component {
     }
 }
 
-var Phase = (title, Body) => class extends React.Component {
+var Phase = (translationKey, Body) => class extends React.Component {
     componentWillMount() {
         this.timer = window.setInterval(this.tick.bind(this), 50);
         this.tick();
@@ -280,12 +293,17 @@ var Phase = (title, Body) => class extends React.Component {
 
     render() {
         return <div>
-            <h3>{title} {this.props.turn} <small>{
+            <h3><FormattedMessage {...translations[translationKey]} values={{turn: this.props.turn}} /> <small>{
             !this.isPrimaryEnding()
-                ? "ends in " + this.formatDuration(this.getPrimaryTimeLeft()) + (this.props.endOnConsensusMet ? ' or on consensus met' : '')
+                ? (this.props.endOnConsensusMet
+                    ? <FormattedMessage {...translations['phase.ending.primaryOrConsensus']}
+                                        values={{timeLeft: this.formatDuration(this.getPrimaryTimeLeft())}} />
+                    : <FormattedMessage {...translations['phase.ending.primary']}
+                                        values={{timeLeft: this.formatDuration(this.getPrimaryTimeLeft())}} />)
                 : !this.isTwilightEnding()
-                    ? "twilight ends in " + this.formatDuration(this.getTwilightTimeLeft())
-                    : "ending..."}</small></h3>
+                    ? <FormattedMessage {...translations['phase.ending.twilight']}
+                                        values={{timeLeft: this.formatDuration(this.getTwilightTimeLeft())}} />
+                    :  <FormattedMessage {...translations['phase.ending.now']} />}</small></h3>
             <Body {...this.props}
                   isPrimaryEnding={this.isPrimaryEnding()}
                   isTwilightEnding={this.isTwilightEnding()} />
@@ -336,14 +354,14 @@ class Vote extends React.Component {
             <fieldset disabled={this.state.waiting}>
                 <div className="form-inline">
                     <div className="form-group">
-                        <label htmlFor="vote-target"><strong>Your vote:</strong></label> {this.state.editing
+                        <label htmlFor="vote-target"><strong><FormattedMessage {...translations['vote.yourVote']} /></strong></label> {this.state.editing
                             ? <select className="form-control" defaultValue={this.props.target === null ? "" : this.props.target} name="target" id="vote-target">
-                                <FormattedMessage {...translations['placeholders.noOne']}>{(message) => <option value="">{message}</option>}</FormattedMessage>
+                                <FormattedMessage {...translations['placeholder.noOne']}>{(message) => <option value="">{message}</option>}</FormattedMessage>
                                 {this.props.candidates.map(candidate =>
                                     <option value={candidate} key={candidate}>{candidate}</option>)}
                             </select>
                             : this.props.target === null
-                                ? <span><em>abstain</em></span>
+                                ? <span><em><FormattedMessage {...translations['vote.abstain']} /></em></span>
                                 : <span><strong>{this.props.target}</strong></span>}
                         {!this.state.editing && this.props.canEdit
                             ? <span> <a href="#" className="glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></a></span>
@@ -351,12 +369,12 @@ class Vote extends React.Component {
                     </div>
 
                     {this.state.editing && this.props.canEdit
-                        ? <span> <button type="submit" className="btn btn-primary">Vote</button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default">Cancel</button></span>
+                        ? <span> <button type="submit" className="btn btn-primary"><FormattedMessage {...translations['vote.form.save']} /></button> <button onClick={this.onCancel.bind(this)} type="button" className="btn btn-default"><FormattedMessage {...translations['vote.form.cancel']} /></button></span>
                         : null}
                 </div>
 
                 {this.state.editing && this.props.canEdit
-                    ? <p className="help-block">Vote for a player to be lynched.</p>
+                    ? <p className="help-block"><FormattedMessage {...translations['vote.help']} /></p>
                     : null}
             </fieldset>
         </form>;
@@ -399,15 +417,15 @@ class Will extends React.Component {
     render() {
         return <form onSubmit={this.onSubmit.bind(this)}><fieldset disabled={this.state.waiting}>
             <h4>
-                <FormattedMessage {...translations['phase.will.title']} />
+                <FormattedMessage {...translations['will.title']} />
                 {!this.state.editing
                     ? <span> <small><a href="#" className="glyphicon glyphicon-pencil" onClick={this.startEdit.bind(this)}></a></small></span>
-                    : <span> <button type="submit" className="btn btn-primary">Save</button> <button type="button" className="btn btn-default" onClick={this.onCancel.bind(this)}>Cancel</button></span>}
+                    : <span> <button type="submit" className="btn btn-primary"><FormattedMessage {...translations['will.form.save']} /></button> <button type="button" className="btn btn-default" onClick={this.onCancel.bind(this)}><FormattedMessage {...translations['will.form.cancel']} /></button></span>}
             </h4>
             {!this.state.editing
                 ? this.props.will !== ''
                     ? <blockquote dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.will)}}></blockquote>
-                    : <em><FormattedMessage {...translations['phase.will.notLeavingWill']} /></em>
+                    : <em><FormattedMessage {...translations['will.notLeavingWill']} /></em>
                 : <div className="form-group">
                     <CodeMirror ref="will" defaultValue={this.props.will} defaultOptions={{
                         viewportMargin: Infinity,
@@ -416,7 +434,7 @@ class Will extends React.Component {
                         mode: 'markdown',
                         theme: 'default'
                     }}/>
-                    <p className="help-block"><FormattedMessage {...translations['phase.will.help']}
+                    <p className="help-block"><FormattedMessage {...translations['will.help']}
                                                                 values={{formattingHelpLink: <a href="http://commonmark.org/help/" target="markdown-help">Markdown</a>}} /></p>
                 </div>}
         </fieldset></form>;
@@ -502,7 +520,7 @@ class Ballot extends React.Component {
         });
 
         return <div>
-            <h4>Voting</h4>
+            <h4><FormattedMessage {...translations['ballot.title']} /></h4>
             {Object.prototype.hasOwnProperty.call(this.props.votes, this.props.me)
                 ? <Vote canEdit={this.props.canEdit}
                         target={this.props.votes[this.props.me]}
@@ -510,13 +528,13 @@ class Ballot extends React.Component {
                         client={this.props.client} />
                 : null}
 
-            <p><strong>Consensus criteria: </strong>{{
-                MostVotes: <FormattedMessage {...translations['ballot.criteria.mostVotes']} />,
-                StrictMajority: <FormattedMessage {...translations['ballot.criteria.strictMajority']}
+            <p><strong><FormattedMessage {...translations['ballot.consensus.title']} /></strong> {{
+                MostVotes: <FormattedMessage {...translations['ballot.consensus.criteria.mostVotes']} />,
+                StrictMajority: <FormattedMessage {...translations['ballot.consensus.criteria.strictMajority']}
                                                   values={{numVotesRequired: Math.floor(voters.length / 2 + 1)}} />
             }[this.props.consensus]}</p>
 
-            <p>Votes cast:</p>
+            <p><FormattedMessage {...translations['ballot.votes.title']} /></p>
 
             {Object.keys(voted).sort(onKeys(name => [-voted[name].length, name])).map(e => {
                 let votes = voted[e];
@@ -526,32 +544,30 @@ class Ballot extends React.Component {
                 }
 
                 return <div key={e}>
-                    <h5>against <strong>{e}</strong> <span className="badge">{votes.length}</span></h5>
+                    <h5><FormattedMessage {...translations['ballot.votes.against']} values={{name: <strong>{e}</strong>}} /> <span className="badge">{votes.length}</span></h5>
                     <ul>
-                        {votes.length > 0
-                            ? votes.map(voter => <li key={voter}><strong>{voter}</strong></li>)
-                            : <li><em>no votes</em></li>}
+                        {votes.map(voter => <li key={voter}><strong>{voter}</strong></li>)}
                     </ul>
                 </div>;
             })}
 
             <div>
-                <h5><em>Abstentions</em></h5>
+                <h5><em><FormattedMessage {...translations['ballot.abstentions.title']} /></em></h5>
                 <ul>
                     {abstentions.length > 0
                         ? abstentions.map(voter => <li key={voter}><strong>{voter}</strong></li>)
-                        : <li><em>no abstentions</em></li>}
+                        : <li><em><FormattedMessage {...translations['ballot.abstentions.none']} /></em></li>}
                 </ul>
             </div>
 
             <div>
-                No votes cast against: {intersperse(noVotes.map(voter => <span key={voter}><strong>{voter}</strong></span>), () => ", ")}
+                <FormattedMessage {...translations['ballot.votes.notAgainst']} values={{names: <span>{intersperse(noVotes.map(voter => <strong key={voter}>{voter}</strong>), () => ', ')}</span>}} />
             </div>
         </div>;
     }
 }
 
-var Day = Phase("Day", class extends React.Component {
+var Day = Phase('phase.title.day', class extends React.Component {
     shouldComponentUpdate(nextProps, nextState) {
         return !deepEqual(this.props, nextProps);
     }
@@ -570,7 +586,7 @@ var Day = Phase("Day", class extends React.Component {
             {this.props.plan.length > 0
                 ? <div>
                     <h4><FormattedMessage {...translations['phase.actions.title']} /></h4>
-                    <p>The following <strong>instantaneous</strong> actions are available, so choose carefully if you want to use one!</p>
+                    <p><FormattedMessage {...translations['phase.actions.instantaneous']} /></p>
                     <Plan plan={this.props.plan}
                           onActionSave={!this.props.isTwilightEnding ? this.onActionSave.bind(this) : null}
                           canEditAction={(i) => this.props.plan[i].targets === null}
@@ -607,17 +623,21 @@ class Death extends React.Component {
     render() {
         return <div>
             <p>
-                <strong>{this.props.player.name}</strong> the <strong>{this.props.player.fullRole}</strong> {this.props.player.modKillReason === null ? this.props.reason : <span>was <strong>modkilled</strong> (<em>{this.props.player.modKillReason}</em>)</span>}.{' '}
+                <FormattedMessage {...translations[this.props.player.modKillReason === null ? this.props.reason : 'death.reason.modkilled']}
+                                  values={{name: <strong>{this.props.player.name}</strong>,
+                                           role: <strong>{this.props.player.fullRole}</strong>}} />{' '}
                 {this.props.player.modKillReason === null
                     ? this.props.player.will !== ''
-                        ? <a onClick={this.toggleWill.bind(this)} href="#">They left a will{this.state.showingWill ? ' (shown below)' : null}.</a>
-                        : <span>They did not leave a will.</span>
-                    : <span>Their will is not available due to modkill.</span>}
+                        ? <a onClick={this.toggleWill.bind(this)} href="#">{this.state.showingWill
+                            ? <FormattedMessage {...translations['death.will.showing']} />
+                            : <FormattedMessage {...translations['death.will.hidden']} />}</a>
+                        : <FormattedMessage {...translations['death.will.none']} />
+                    : <FormattedMessage {...translations['death.will.modkilled']} />}
             </p>
             {this.state.showingWill
                 ? <blockquote>
                     <div dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.player.will)}}></div>
-                    <footer>The last will and testament of <cite>{this.props.player.name}</cite></footer>
+                    <footer><FormattedMessage {...translations['death.will.footer']} values={{name: <cite>{this.props.player.name}</cite>}} /></footer>
                 </blockquote>
                 : null}
         </div>;
@@ -627,19 +647,19 @@ class Death extends React.Component {
 class DayResult extends React.Component {
     render() {
         return <div>
-            <h3>Day {this.props.turn} <small>ended</small></h3>
+            <h3><FormattedMessage {...translations['phase.title.day']} values={{turn: this.props.turn}} /> <small><FormattedMessage {...translations['phase.ending.ended']} /></small></h3>
             {this.props.lynched !== null
-                ? <Death player={this.props.lynched} reason="was lynched" />
-                : <p>Nobody was lynched.</p>}
+                ? <Death player={this.props.lynched} reason="death.reason.lynched" />
+                : <p><FormattedMessage {...translations['death.reason.noLynch']} /></p>}
             {this.props.deaths.length > 0
                 ? this.props.deaths.sort(onKeys(player => [player.name])).map(player =>
-                    <Death key={player.name} player={player} reason="died" />)
+                    <Death key={player.name} player={player} reason="death.reason.died" />)
                 : null}
 
             {this.props.plan.length > 0
                 ? <div>
                     <h4><FormattedMessage {...translations['phase.actions.title']} /></h4>
-                    <p>The following <strong>instantaneous</strong> actions were available:</p>
+                    <p><FormattedMessage {...translations['phase.actions.wereInstantaneous']} /></p>
                     <Plan plan={this.props.plan}
                           canEditAction={(i) => false}
                           onActionSave={null}
@@ -656,7 +676,7 @@ class DayResult extends React.Component {
     }
 }
 
-var Night = Phase("Night", class extends React.Component {
+var Night = Phase('phase.title.night', class extends React.Component {
     shouldComponentUpdate(nextProps, nextState) {
         return !deepEqual(this.props, nextProps);
     }
@@ -669,13 +689,13 @@ var Night = Phase("Night", class extends React.Component {
         return <div>
             {this.props.deaths.length > 0
                 ? this.props.deaths.sort(onKeys(player => [player.name])).map(player =>
-                    <Death key={player.name} player={player} reason="died" />)
+                    <Death key={player.name} player={player} reason="death.reason.died" />)
                 : null}
 
             {this.props.plan.length > 0
                 ? <div>
                     <h4><FormattedMessage {...translations['phase.actions.title']} /></h4>
-                    <p>The following actions are available:</p>
+                    <p><FormattedMessage {...translations['phase.actions.available']} /></p>
                     <Plan plan={this.props.plan}
                           canEditAction={(i) => true}
                           onActionSave={!this.props.isPrimaryEnding ? this.onActionSave.bind(this) : null}
@@ -692,16 +712,16 @@ var Night = Phase("Night", class extends React.Component {
 class NightResult extends React.Component {
     render() {
         return <div>
-            <h3>Night {this.props.turn} <small>ended</small></h3>
+            <h3><FormattedMessage {...translations['phase.title.night']} values={{turn: this.props.turn}} /> <small><FormattedMessage {...translations['phase.ending.ended']} /></small></h3>
             {this.props.deaths.length > 0
                 ? this.props.deaths.sort(onKeys(player => [player.name])).map(player =>
-                    <Death key={player.name} player={player} reason="was found dead" />)
-                : <p>Nobody was found dead.</p>}
+                    <Death key={player.name} player={player} reason="death.reason.foundDead" />)
+                : <p><FormattedMessage {...translations['death.reason.noneFoundDead']} /></p>}
 
             {this.props.plan.length > 0
                 ? <div>
                     <h4><FormattedMessage {...translations['phase.actions.title']} /></h4>
-                    <p>The following actions were available:</p>
+                    <p><FormattedMessage {...translations['phase.actions.wereAvailable']} /></p>
                     <Plan plan={this.props.plan}
                           canEditAction={(i) => false}
                           onActionSave={null}
@@ -736,51 +756,56 @@ class Profile extends React.Component {
         return <div>
             <h2 style={{textDecoration: this.props.players[this.props.name] === null ? null : 'line-through'}}>{this.props.name}</h2>
             <dl>
-                <dt>Role</dt>
+                <dt><FormattedMessage {...translations['profile.role']} /></dt>
                 <dd>{this.props.fullRole}</dd>
 
-                <dt>Faction</dt>
+                <dt><FormattedMessage {...translations['profile.faction']} /></dt>
                 <dd>{this.props.faction}</dd>
 
-                <dt>Abilities</dt>
+                <dt><FormattedMessage {...translations['profile.abilities']} /></dt>
                 <dd>{this.props.abilities}</dd>
 
-                <dt>Agenda</dt>
+                <dt><FormattedMessage {...translations['profile.agenda']} /></dt>
                 <dd>
-                    {this.props.factionIsPrimary ? <span>Eliminate all members of all other factions.</span> : null}
-                    {this.props.factionIsPrimary && this.props.agenda !== null ? <em><br/>and<br/></em> : null}
-                    {this.props.agenda !== null ? this.props.agenda : null}
+                    <ul>
+                        {this.props.factionIsPrimary ? <li><FormattedMessage {...translations['agenda.primary']} /></li> : null}
+                        {this.props.agenda !== null ? <li>{this.props.agenda}</li> : null}
+                    </ul>
                 </dd>
 
-                <dt>Friends</dt>
+                <dt><FormattedMessage {...translations['profile.friends']} /></dt>
                 <dd>
-                    {this.props.friends.length > 0 ? <ul>
-                        {this.props.friends.sort(onKeys(name => [this.props.players[name] === null ? 0 : 1, name])).map(name => {
+                    <ul>
+                    {this.props.friends.length > 0
+                        ? this.props.friends.sort(onKeys(name => [this.props.players[name] === null ? 0 : 1, name])).map(name => {
                             let player = this.props.players[name];
                             return <li key={name}>{player === null
                                 ? name
                                 : <span><del>{name}</del><br/><small>{player.fullRole}</small></span>}</li>;
-                        })}
-                    </ul> : 'none'}
+                        })
+                        : <li><em><FormattedMessage {...translations['placeholder.noOne']} /></em></li>}
+                    </ul>
                 </dd>
 
-                <dt>Cohorts</dt>
+                <dt><FormattedMessage {...translations['profile.cohorts']} /></dt>
                 <dd>
-                    {this.props.cohorts.length > 0 ? <ul>
-                        {this.props.cohorts.sort(onKeys(name => [name === null || this.props.players[name] === null ? 0 : 1, name])).map((name, i) => {
+                    <ul>
+                    {this.props.cohorts.length > 0
+                        ? this.props.cohorts.sort(onKeys(name => [name === null || this.props.players[name] === null ? 0 : 1, name])).map((name, i) => {
                             if (name === null) {
-                                return <li key={i}><em><FormattedMessage {...translations['placeholders.someone']} /></em></li>;
+                                return <li key={i}><em><FormattedMessage {...translations['placeholder.someone']} /></em></li>;
                             } else {
                                 let player = this.props.players[name];
                                 return <li key={name}>{player === null
                                     ? name
                                     : <span><del>{name}</del><br/><small>{player.fullRole}</small></span>}</li>;
                             }
-                        })}
-                    </ul> : 'none'}
+                        })
+                        : <li><em><FormattedMessage {...translations['placeholder.noOne']} /></em></li>}
+                    </ul>
                 </dd>
 
-                <dt>Players <span className="badge">{Object.keys(this.props.players).filter(name => this.props.players[name] === null).length}</span></dt>
+                <dt><FormattedMessage {...translations['profile.players']} /> <span className="badge">{Object.keys(this.props.players).filter(name => this.props.players[name] === null).length}</span></dt>
                 <dd>
                     <ul>
                         {Object.keys(this.props.players).sort(onKeys(name => [this.props.players[name] === null ? 0 : 1, name])).map(name => {
@@ -799,7 +824,7 @@ class Profile extends React.Component {
 class Start extends React.Component {
     render() {
         return <div>
-            <h3>Start</h3>
+            <h3><FormattedMessage {...translations['phase.title.start']} /></h3>
             <div dangerouslySetInnerHTML={{__html: REMARKABLE.render(this.props.motd)}}></div>
         </div>;
     }
@@ -825,13 +850,13 @@ class LogEntry extends React.Component {
             ? this.props.entry.planned === null
                 ? this.present(this.props.entry.final)
                 : <div>
-                    <div><del>{this.present(this.props.entry.planned)}</del> (altered)</div>
+                    <div><del>{this.present(this.props.entry.planned)}</del> <FormattedMessage {...translations['actionLog.entry.hint.altered']} /></div>
                     <div>{this.present(this.props.entry.final)}</div>
                 </div>
-            : <div><del>{this.present(this.props.entry.planned)}</del> (blocked)</div>
+            : <div><del>{this.present(this.props.entry.planned)}</del> <FormattedMessage {...translations['actionLog.entry.hint.blocked']} /></div>
         }</div>{triggerKeys.length > 0
             ? <div>
-                <em>caused:</em>
+                <em><FormattedMessage {...translations['actionLog.entry.caused']} /></em>
                 <ul>
                     {triggerKeys.map(key => <LogEntry key={key} entry={this.props.entry.triggers[key]} />)}
                 </ul>
@@ -843,22 +868,22 @@ class LogEntry extends React.Component {
 class End extends React.Component {
     render() {
         return <div>
-            <h3>End</h3>
+            <h3><FormattedMessage {...translations['phase.title.end']} /></h3>
             <p>{this.props.winners.indexOf(this.props.me) !== -1
-                ? 'Congratulations, you won!'
-                : 'Better luck next time!'}
+                ? <FormattedMessage {...translations['end.result.win']} />
+                : <FormattedMessage {...translations['end.result.loss']} />}
             </p>
 
             {this.props.winners.length > 0
                 ? <div>
-                    <p>The winners are:</p>
+                    <p><FormattedMessage {...translations['end.winners.title']} /></p>
                     <ul>
                         {this.props.winners.sort().map(e => <li key={e}>{e}</li>)}
                     </ul>
                 </div>
-                : <p>Everyone lost!</p>}
+                : <p><FormattedMessage {...translations['end.winners.none']} /></p>}
 
-            <h4>Roles</h4>
+            <h4><FormattedMessage {...translations['roles.title']} /></h4>
             <ul>
                 {Object.keys(this.props.players).sort().map(name => {
                     let player = this.props.players[name];
@@ -866,12 +891,8 @@ class End extends React.Component {
                 })}
             </ul>
 
-            <h4>Action Log</h4>
-            <p>
-                This is the log of all actions performed during the game. The
-                ordering of actions is not significant – actions that are not
-                struck out are guaranteed to have been performed.
-            </p>
+            <h4><FormattedMessage {...translations['actionLog.title']} /></h4>
+            <p><FormattedMessage {...translations['actionLog.description']} /></p>
 
             {Object.keys(this.props.log).sort(onKeys(k => [+k])).map(turn => ['Night', 'Day'].map(phase => {
                 let phases = this.props.log[turn];
@@ -887,7 +908,7 @@ class End extends React.Component {
                     <h5>{phase} {turn}</h5>
                     <ul>{entryKeys.length > 0
                         ? entryKeys.map(key => <LogEntry key={key} entry={entries[key]} />)
-                        : <li><em>Nothing happened.</em></li>}</ul>
+                        : <li><em><FormattedMessage {...translations['actionLog.entry.nothingHappened']} /></em></li>}</ul>
                 </div>;
             }))}
         </div>;
@@ -1060,7 +1081,7 @@ class Root extends React.Component {
     render() {
         if (this.state.error !== null) {
             return <div className="container">
-                <div className="alert alert-danger">Permanently disconnected from server: {this.state.error}</div>
+                <div className="alert alert-danger"><FormattedMessage {...translations['error.permanent']} values={{reason: this.state.error}} /></div>
             </div>;
         }
 
@@ -1104,7 +1125,7 @@ class Root extends React.Component {
             </div>
 
             {!this.state.connected
-                ? <div className="alert alert-warning">Lost server connection. We'll be back shortly!</div>
+                ? <div className="alert alert-warning"><FormattedMessage {...translations['error.temporary']} /></div>
                 : null}
 
             <div className="row">
@@ -1126,7 +1147,7 @@ class Root extends React.Component {
                              end={this.state.phaseState.end}
                              twilightDuration={this.state.publicInfo.twilightDuration}
                              consensus={this.state.publicInfo.consensus}
-                             endOnConsensusMet={this.state.publicInfo.lynchOnConsensusMet}
+                             endOnConsensusMet={this.state.publicInfo.endOnConsensusMet}
                              plan={this.state.phaseState.plan}
                              will={this.state.will}
                              dead={dead}
