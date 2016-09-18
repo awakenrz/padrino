@@ -1023,14 +1023,16 @@ class Client {
 }
 
 function loadLocaleData(lang) {
+    let context = require.context('bundle?name=i18n/locale-data/[name]!react-intl/locale-data');
     return new Promise((resolve, reject) => {
-        require.context('bundle?name=i18n/locale-data/[name]!react-intl/locale-data')('./' + lang)(resolve);
+        context('./' + lang)(resolve);
     });
 }
 
 function loadMessages(locale) {
+    let context = require.context('bundle?name=i18n/messages/[name]!./translations', false, /^\.\/(?!whitelist_).*\.json$/);
     return new Promise((resolve, reject) => {
-        require.context('bundle?name=i18n/messages/[name]!./translations', false, /^\.\/(?!whitelist_).*\.json$/)('./' + locale + '.json')(resolve);
+        context('./' + locale + '.json')(resolve);
     });
 }
 
@@ -1038,6 +1040,7 @@ function loadLocale(locale) {
     let lang = locale.split(/-/)[0];
 
     return Promise.all([loadLocaleData(lang), loadMessages(locale)]).then(([localeData, messages]) => {
+        console.log(localeData, messages);
         addLocaleData(localeData);
         return messages;
     });
