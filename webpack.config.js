@@ -8,6 +8,7 @@ module.exports = {
   entry: APP_DIR + '/main.jsx',
   output: {
     path: BUILD_DIR,
+    publicPath: './static/',
     filename: 'bundle.js'
   },
   module: {

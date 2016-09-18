@@ -9,7 +9,6 @@ import querystring from 'querystring';
 import {} from 'codemirror/mode/markdown/markdown';
 
 import translations from './translations';
-import messages from './translations/messages';
 
 const QS = querystring.parse(window.location.search.substring(1));
 
@@ -1023,14 +1022,23 @@ class Client {
     }
 }
 
+function loadMessagesForLocale(locale, cb) {
+    require.context('bundle!./translations', false, /^\.\/(?!whitelist_).*\.json$/)('./' + locale + '.json')(cb);
+}
+
 class Root extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             ready: false,
+            messages: {},
             connected: false,
             error: null
         };
+    }
+
+    getLocale() {
+        return QS.lang || (this.state.publicInfo ? this.state.publicInfo.locale : null) || navigator.language;
     }
 
     componentWillMount() {
@@ -1039,15 +1047,23 @@ class Root extends React.Component {
 
     componentDidMount() {
         this.client.onRootMessage = root => {
+            let lastLocale = this.getLocale();
             this.setState(root);
-            this.setState({ready: true});
+            let locale = this.getLocale();
+
+            // If our locale changed, we need to load new locale messages.
+            if (!this.state.ready || locale !== lastLocale) {
+                loadMessagesForLocale(locale, messages => {
+                    this.setState({messages: messages, ready: true});
+                });
+            }
         };
 
         this.client.onPhaseEndMessage = end => {
             let state = {
                 publicState: end.publicState,
                 playerState: end.playerState,
-                phaseState: end.phaseState
+                phaseState: end.phaseState,
             };
 
             switch (end.phase) {
@@ -1080,8 +1096,7 @@ class Root extends React.Component {
     }
 
     render() {
-        let locale = (this.state.ready ? this.state.publicInfo.locale : null) || QS.lang || navigator.language;
-        return <IntlProvider locale={locale} messages={messages[locale]}>{this.renderBody()}</IntlProvider>;
+        return <IntlProvider locale={this.getLocale()} messages={this.state.messages}>{this.renderBody()}</IntlProvider>;
     }
 
     renderBody() {

@@ -24,6 +24,7 @@
     "babel-plugin-react-intl": "^2.2.0",
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-react": "^6.5.0",
+    "bundle-loader": "^0.5.4",
     "react-intl-translations-manager": "^3.1.0",
     "webpack": "^1.13.1"
   },
