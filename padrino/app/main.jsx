@@ -10,9 +10,6 @@ import {} from 'codemirror/mode/markdown/markdown';
 
 import translations from './translations';
 
-import enLocaleData from 'react-intl/locale-data/en';
-addLocaleData(enLocaleData);
-
 const QS = querystring.parse(window.location.search.substring(1));
 
 const REMARKABLE = new Remarkable('commonmark', {
@@ -1025,8 +1022,22 @@ class Client {
     }
 }
 
-function loadMessagesForLocale(locale, cb) {
-    require.context('bundle!./translations', false, /^\.\/(?!whitelist_).*\.json$/)('./' + locale + '.json')(cb);
+function loadLocale(locale, cb) {
+    let lang = locale.split(/-/)[0];
+    try {
+        require.context('bundle!react-intl/locale-data')('./' + lang)((localeData) => {
+            addLocaleData(localeData);
+            try {
+                require.context('bundle!./translations', false, /^\.\/(?!whitelist_).*\.json$/)('./' + locale + '.json')(cb);
+            } catch (e) {
+                console.error('Error while loading messages for locale ' + locale + ':', e);
+                cb({});
+            }
+        });
+    } catch (e) {
+        console.error('Error while loading locale data for language ' + lang + ':', e);
+        cb({});
+    }
 }
 
 class Root extends React.Component {
@@ -1053,7 +1064,7 @@ class Root extends React.Component {
 
             // If our locale changed, we need to load new locale messages.
             if (!this.state.ready || locale !== lastLocale) {
-                loadMessagesForLocale(locale, messages => {
+                loadLocale(locale, messages => {
                     this.setState({
                         locale: locale,
                         messages: messages,
@@ -1100,7 +1111,9 @@ class Root extends React.Component {
     }
 
     render() {
-        return <IntlProvider locale={this.state.locale} messages={this.state.messages}>{this.renderBody()}</IntlProvider>;
+        return <IntlProvider locale={this.state.locale} messages={this.state.messages}>
+            <div lang={this.state.locale}>{this.renderBody()}</div>
+        </IntlProvider>;
     }
 
     renderBody() {
