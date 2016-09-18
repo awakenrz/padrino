@@ -2,13 +2,16 @@ import deepEqual from 'deep-equal';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import CodeMirror from './react-codemirror.jsx';
-import {IntlProvider, FormattedMessage} from 'react-intl';
+import {IntlProvider, FormattedMessage, addLocaleData} from 'react-intl';
 import Remarkable from 'remarkable';
 import jwtDecode from 'jwt-decode';
 import querystring from 'querystring';
 import {} from 'codemirror/mode/markdown/markdown';
 
 import translations from './translations';
+
+import enLocaleData from 'react-intl/locale-data/en';
+addLocaleData(enLocaleData);
 
 const QS = querystring.parse(window.location.search.substring(1));
 

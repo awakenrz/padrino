@@ -11,7 +11,7 @@
   "actionLog.entry.nothingHappened": "Nothing happened.",
   "actionLog.title": "Action Log",
   "agenda.primary": "Eliminate all members of all other factions.",
-  "ballot.abstentions.none": "no abstensions",
+  "ballot.abstentions.none": "no abstentions",
   "ballot.abstentions.title": "Abstentions",
   "ballot.consensus.criteria.mostVotes": "The player with the most votes will be lynched.",
   "ballot.consensus.criteria.strictMajority": "The player for whom the strict majority of votes are for will be lynched ({numVotesRequired} required).",

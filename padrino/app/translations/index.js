@@ -259,7 +259,7 @@ export default defineMessages({
 
     'ballot.abstentions.none': {
         id: 'ballot.abstentions.none',
-        defaultMessage: 'no abstensions'
+        defaultMessage: 'no abstentions'
     },
 
     'ballot.consensus.title': {
