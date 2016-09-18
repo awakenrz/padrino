@@ -1031,14 +1031,11 @@ class Root extends React.Component {
         super(props);
         this.state = {
             ready: false,
+            locale: QS.lang || navigator.language,
             messages: {},
             connected: false,
             error: null
         };
-    }
-
-    getLocale() {
-        return QS.lang || (this.state.publicInfo ? this.state.publicInfo.locale : null) || navigator.language;
     }
 
     componentWillMount() {
@@ -1047,14 +1044,18 @@ class Root extends React.Component {
 
     componentDidMount() {
         this.client.onRootMessage = root => {
-            let lastLocale = this.getLocale();
+            let lastLocale = this.state.locale;
             this.setState(root);
-            let locale = this.getLocale();
+            let locale = QS.lang || (root.publicInfo ? root.publicInfo.locale : null) || navigator.language;
 
             // If our locale changed, we need to load new locale messages.
             if (!this.state.ready || locale !== lastLocale) {
                 loadMessagesForLocale(locale, messages => {
-                    this.setState({messages: messages, ready: true});
+                    this.setState({
+                        locale: locale,
+                        messages: messages,
+                        ready: true
+                    });
                 });
             }
         };
@@ -1096,7 +1097,7 @@ class Root extends React.Component {
     }
 
     render() {
-        return <IntlProvider locale={this.getLocale()} messages={this.state.messages}>{this.renderBody()}</IntlProvider>;
+        return <IntlProvider locale={this.state.locale} messages={this.state.messages}>{this.renderBody()}</IntlProvider>;
     }
 
     renderBody() {
