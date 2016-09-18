@@ -1022,22 +1022,25 @@ class Client {
     }
 }
 
-function loadLocale(locale, cb) {
+function loadLocaleData(lang) {
+    return new Promise((resolve, reject) => {
+        require.context('bundle?name=i18n/locale-data/[name]!react-intl/locale-data')('./' + lang)(resolve);
+    });
+}
+
+function loadMessages(locale) {
+    return new Promise((resolve, reject) => {
+        require.context('bundle?name=i18n/messages/[name]!./translations', false, /^\.\/(?!whitelist_).*\.json$/)('./' + locale + '.json')(resolve);
+    });
+}
+
+function loadLocale(locale) {
     let lang = locale.split(/-/)[0];
-    try {
-        require.context('bundle?name=i18n/locale-data/[name]!react-intl/locale-data')('./' + lang)((localeData) => {
-            addLocaleData(localeData);
-            try {
-                require.context('bundle?name=i18n/messages/[name]!./translations', false, /^\.\/(?!whitelist_).*\.json$/)('./' + locale + '.json')(cb);
-            } catch (e) {
-                console.error('Error while loading messages for locale ' + locale + ':', e);
-                cb({});
-            }
-        });
-    } catch (e) {
-        console.error('Error while loading locale data for language ' + lang + ':', e);
-        cb({});
-    }
+
+    return Promise.all([loadLocaleData(lang), loadMessages(locale)]).then(([localeData, messages]) => {
+        addLocaleData(localeData);
+        return messages;
+    });
 }
 
 class Root extends React.Component {
@@ -1064,10 +1067,17 @@ class Root extends React.Component {
 
             // If our locale changed, we need to load new locale messages.
             if (!this.state.ready || locale !== lastLocale) {
-                loadLocale(locale, messages => {
+                loadLocale(locale).then(messages => {
                     this.setState({
                         locale: locale,
                         messages: messages,
+                        ready: true
+                    });
+                }, e => {
+                    console.error('Error while loading locale ' + locale + ':', e);
+                    this.setState({
+                        locale: locale,
+                        messages: {},
                         ready: true
                     });
                 });
