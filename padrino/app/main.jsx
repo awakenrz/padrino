@@ -1025,10 +1025,10 @@ class Client {
 function loadLocale(locale, cb) {
     let lang = locale.split(/-/)[0];
     try {
-        require.context('bundle!react-intl/locale-data')('./' + lang)((localeData) => {
+        require.context('bundle?name=i18n/locale-data/[name]!react-intl/locale-data')('./' + lang)((localeData) => {
             addLocaleData(localeData);
             try {
-                require.context('bundle!./translations', false, /^\.\/(?!whitelist_).*\.json$/)('./' + locale + '.json')(cb);
+                require.context('bundle?name=i18n/messages/[name]!./translations', false, /^\.\/(?!whitelist_).*\.json$/)('./' + locale + '.json')(cb);
             } catch (e) {
                 console.error('Error while loading messages for locale ' + locale + ':', e);
                 cb({});

@@ -9,7 +9,8 @@ module.exports = {
   output: {
     path: BUILD_DIR,
     publicPath: './static/',
-    filename: 'bundle.js'
+    chunkFilename: '[name].js',
+    filename: '[name].js'
   },
   module: {
     preLoaders: [{
