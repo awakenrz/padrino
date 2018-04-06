@@ -43,17 +43,23 @@
 
    s = simple.make_simple(b)
 
-   alice = b.declare_player('Alice', 'Town Doctor', s.TOWN() + s.DOCTOR())
-   bob = b.declare_player('Bob', 'Vanilla Townie', s.TOWN())
-   eve = b.declare_player('Eve', 'Mafia Goon', s.MAFIA())
-   mallory = b.declare_player('Mallory', 'Mafia Godfather', s.MAFIA() + s.GODFATHER())
+   alice = b.declare_player('Alice', 'Town Doctor', '', s.TOWN() + s.DOCTOR())
+   bob = b.declare_player('Bob', 'Vanilla Townie', '', s.TOWN())
+   eve = b.declare_player('Eve', 'Mafia Goon', '', s.MAFIA())
+   mallory = b.declare_player('Mallory', 'Mafia Godfather', '', s.MAFIA() + s.GODFATHER())
 
    b.make_friends([eve, mallory])
 
-   b.write('game')
+   b.build('game')
    ```
 
-2. Start the game.
+2. Run the game builder.
+
+  ```
+  python <path to game builder>
+  ```
+
+3. Start the game.
 
    ```
    python -m padrino.server --game_path <path to your game>
@@ -61,3 +67,8 @@
 
    If all is well, you will receive a token for each player. Distribute these
    tokens securely.
+
+4. Access the web UI via the following URL:
+   ```
+   http://<game server IP>:8888/?token=<token>
+   ```
